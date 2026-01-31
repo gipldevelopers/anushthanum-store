@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const RecentlyViewedContext = createContext(undefined);
 
@@ -24,18 +24,18 @@ export function RecentlyViewedProvider({ children }) {
     sessionStorage.setItem('anushtanum-recently-viewed', JSON.stringify(items));
   }, [items]);
 
-  const addToRecentlyViewed = (product) => {
+  const addToRecentlyViewed = useCallback((product) => {
     setItems((prev) => {
       const filtered = prev.filter((item) => item.id !== product.id);
       const updated = [product, ...filtered];
       return updated.slice(0, MAX_ITEMS);
     });
-  };
+  }, []);
 
-  const clearRecentlyViewed = () => {
+  const clearRecentlyViewed = useCallback(() => {
     setItems([]);
     sessionStorage.removeItem('anushtanum-recently-viewed');
-  };
+  }, []);
 
   return (
     <RecentlyViewedContext.Provider

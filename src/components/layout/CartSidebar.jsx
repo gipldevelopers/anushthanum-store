@@ -1,14 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, ShoppingBag, Trash2, Shield, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 
 export default function CartSidebar() {
-  const router = useRouter();
   const {
     items,
     isCartOpen,
@@ -17,11 +15,6 @@ export default function CartSidebar() {
     removeFromCart,
     totalPrice,
   } = useCart();
-
-  const handleCheckout = () => {
-    setIsCartOpen(false);
-    router.push('/checkout');
-  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {
@@ -205,9 +198,11 @@ export default function CartSidebar() {
                   <Button
                     size="lg"
                     className="w-full bg-primary hover:bg-primary/90 btn-glow"
-                    onClick={handleCheckout}
+                    asChild
                   >
-                    Proceed to Checkout
+                    <Link href="/checkout" onClick={() => setIsCartOpen(false)}>
+                      Proceed to Checkout
+                    </Link>
                   </Button>
                   <Button
                     size="lg"
