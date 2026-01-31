@@ -69,10 +69,10 @@ export default function ProductCard({ product, index = 0 }) {
         <button
           type="button"
           onClick={handleWishlistToggle}
-          className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center transition-all duration-200 border border-border/50 hover:scale-105 ${
+          className={`absolute top-3 right-3 z-10 w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center transition-all duration-200 border border-border/50 hover:scale-105 touch-target ${
             isWishlisted
               ? 'opacity-100 text-destructive'
-              : 'opacity-0 group-hover:opacity-100 hover:bg-background hover:text-destructive'
+              : 'touch-show-hover-hide hover:bg-background hover:text-destructive'
           }`}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
@@ -90,12 +90,12 @@ export default function ProductCard({ product, index = 0 }) {
             initial={false}
             animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-foreground/70 via-foreground/40 to-transparent pointer-events-none"
+            className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-foreground/70 via-foreground/40 to-transparent pointer-events-none [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:pointer-events-auto"
           >
             <div className="flex gap-2 pointer-events-auto">
               <Button
                 size="sm"
-                className={`flex-1 text-sm transition-all ${
+                className={`flex-1 text-sm transition-all min-h-[44px] sm:min-h-0 ${
                   isAddedToCart ? 'bg-accent hover:bg-accent text-accent-foreground' : 'bg-primary hover:bg-primary/90'
                 }`}
                 onClick={handleAddToCart}
@@ -116,7 +116,7 @@ export default function ProductCard({ product, index = 0 }) {
               <Button
                 size="sm"
                 variant="secondary"
-                className="bg-background/90 hover:bg-background text-foreground"
+                className="bg-background/90 hover:bg-background text-foreground min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                 onClick={handleQuickView}
                 aria-label="Quick view"
               >

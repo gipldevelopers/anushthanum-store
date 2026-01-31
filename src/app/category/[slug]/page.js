@@ -401,7 +401,7 @@ export default function CategoryPage() {
                 </div>
 
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px] min-w-0">
                     <SlidersHorizontal className="w-4 h-4 mr-2 shrink-0" />
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>

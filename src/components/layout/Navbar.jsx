@@ -96,6 +96,20 @@ export default function Navbar() {
     }
   }, [isSearchOpen]);
 
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
   const searchSuggestions = useMemo(() => {
     if (searchQuery.length < 2) return [];
     const query = searchQuery.toLowerCase();
@@ -149,21 +163,21 @@ export default function Navbar() {
                 Anushthanum
               </h1>
             </Link>
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-0.5 sm:gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                className="text-foreground/70 hover:text-foreground hover:bg-muted/50 touch-target h-11 w-11 sm:h-10 sm:w-10"
                 aria-label="Search"
               >
                 <Search className="w-5 h-5" />
               </Button>
-              <Link href="/wishlist">
+              <Link href="/wishlist" className="touch-target flex">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  className="relative text-foreground/70 hover:text-foreground hover:bg-muted/50 h-11 w-11 sm:h-10 sm:w-10 min-w-0"
                   aria-label="Wishlist"
                 >
                   <Heart className="w-5 h-5" />
@@ -178,7 +192,7 @@ export default function Navbar() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsCartOpen(true)}
-                className="relative text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                className="relative text-foreground/70 hover:text-foreground hover:bg-muted/50 touch-target h-11 w-11 sm:h-10 sm:w-10"
                 aria-label="Cart"
               >
                 <ShoppingCart className="w-5 h-5" />
@@ -188,11 +202,11 @@ export default function Navbar() {
                   </span>
                 )}
               </Button>
-              <Link href="/profile">
+              <Link href="/profile" className="touch-target flex">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  className="text-foreground/70 hover:text-foreground hover:bg-muted/50 h-11 w-11 sm:h-10 sm:w-10 min-w-0"
                   aria-label="Account"
                 >
                   <User className="w-5 h-5" />
@@ -202,7 +216,7 @@ export default function Navbar() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="lg:hidden text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                className="lg:hidden text-foreground/70 hover:text-foreground hover:bg-muted/50 touch-target h-11 w-11 sm:h-10 sm:w-10"
                 aria-label="Menu"
               >
                 {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

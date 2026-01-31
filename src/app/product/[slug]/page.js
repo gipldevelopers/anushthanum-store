@@ -171,12 +171,12 @@ export default function ProductPage() {
                 </div>
               </div>
             </motion.div>
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className="flex gap-3 overflow-x-auto pb-2 scroll-touch snap-x snap-mandatory">
               {product.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
+                  className={`w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors snap-start touch-target min-w-[44px] min-h-[44px] ${
                     selectedImage === index
                       ? 'border-primary'
                       : 'border-transparent hover:border-primary/50'

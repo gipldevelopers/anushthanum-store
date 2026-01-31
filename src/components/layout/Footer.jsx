@@ -84,7 +84,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="container py-10 md:py-14">
+      <div className="container py-10 md:py-14 px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-6">
           <div className="lg:col-span-2">
             <Link href="/" className="inline-block">
@@ -108,13 +108,13 @@ export default function Footer() {
             </div>
             <div className="mb-6">
               <h4 className="font-medium text-sm mb-3 text-background">Get Updates & Offers</h4>
-              <form className="flex gap-2">
+              <form className="flex flex-col sm:flex-row gap-2">
                 <Input
                   type="email"
                   placeholder="Your email address"
-                  className="bg-background/10 border-background/15 text-background placeholder:text-background/40 focus:border-primary text-sm h-10"
+                  className="bg-background/10 border-background/15 text-background placeholder:text-background/40 focus:border-primary text-sm h-11 sm:h-10 flex-1 min-w-0"
                 />
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-4">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground h-11 sm:h-10 px-4 shrink-0">
                   Subscribe
                 </Button>
               </form>
@@ -138,53 +138,54 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
-            <h4 className="font-serif font-semibold text-sm mb-4 text-background">Shop</h4>
-            <ul className="space-y-2.5">
-              {footerLinks.shop.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-background/60 hover:text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-serif font-semibold text-sm mb-4 text-background">Learn</h4>
-            <ul className="space-y-2.5">
-              {footerLinks.learn.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-background/60 hover:text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-serif font-semibold text-sm mb-4 text-background">Help</h4>
-            <ul className="space-y-2.5">
-              {footerLinks.help.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-background/60 hover:text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-serif font-semibold text-sm mb-4 text-background">Contact</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-1 gap-8 lg:gap-6 lg:contents">
+            <div>
+              <h4 className="font-serif font-semibold text-sm mb-4 text-background">Shop</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.shop.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-background/60 hover:text-primary transition-colors inline-block py-1"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-serif font-semibold text-sm mb-4 text-background">Learn</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.learn.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-background/60 hover:text-primary transition-colors inline-block py-1"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-serif font-semibold text-sm mb-4 text-background">Help</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.help.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-background/60 hover:text-primary transition-colors inline-block py-1"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-serif font-semibold text-sm mb-4 text-background">Contact</h4>
             <ul className="space-y-3 text-sm text-background/60">
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
@@ -209,6 +210,7 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
+            </div>
           </div>
         </div>
       </div>

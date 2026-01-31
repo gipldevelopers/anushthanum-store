@@ -91,10 +91,29 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Safe area for notched devices */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   body {
     @apply bg-background text-foreground font-sans;
     font-feature-settings: "cv11", "ss01";
+    /* Prevent horizontal overscroll on mobile */
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: hsl(var(--primary) / 0.15);
+  }
+  /* Prevent iOS zoom on input focus (16px minimum) */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: inherit;
+    }
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif font-semibold tracking-tight text-foreground;
@@ -161,9 +180,11 @@
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a66b' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
   .whatsapp-float {
-    @apply fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300;
+    @apply fixed z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 touch-target;
     background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
     box-shadow: 0 4px 16px rgba(37, 211, 102, 0.3);
+    bottom: calc(1.5rem + env(safe-area-inset-bottom));
+    right: calc(1.5rem + env(safe-area-inset-right));
   }
   .whatsapp-float:hover {
     @apply scale-105;
@@ -317,5 +338,26 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+  /* Minimum touch target (44px) for accessibility on mobile */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  /* Show on touch devices, hide until hover on devices with hover */
+  .touch-show-hover-hide {
+    opacity: 1;
+  }
+  @media (hover: hover) {
+    .touch-show-hover-hide {
+      opacity: 0;
+    }
+    .group:hover .touch-show-hover-hide {
+      opacity: 1;
+    }
+  }
+  /* Smooth horizontal scroll on iOS */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
   }
 }

@@ -61,7 +61,7 @@ export default function HeroCarousel() {
   const next = () => goTo((current + 1) % slides.length);
 
   return (
-    <section className="relative h-[calc(100vh-120px)] min-h-[500px] overflow-hidden">
+    <section className="relative h-[calc(100vh-80px)] sm:h-[calc(100vh-120px)] min-h-[400px] sm:min-h-[500px] overflow-hidden">
       <AnimatePresence mode="wait">
         {slides.map(
           (slide, index) =>
@@ -106,10 +106,10 @@ export default function HeroCarousel() {
                     <span className="text-sm font-medium text-primary uppercase tracking-widest">
                       {slide.subtitle}
                     </span>
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mt-2 mb-4 leading-tight text-background">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mt-2 mb-4 leading-tight text-background">
                       {slide.title}
                     </h1>
-                    <p className="text-base md:text-lg text-background/80 mb-8 max-w-md leading-relaxed">
+                    <p className="text-sm sm:text-base md:text-lg text-background/80 mb-6 sm:mb-8 max-w-md leading-relaxed">
                       {slide.description}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -142,7 +142,7 @@ export default function HeroCarousel() {
       <button
         type="button"
         onClick={prev}
-        className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background/10 backdrop-blur-sm flex items-center justify-center text-background hover:bg-background/20 transition-colors border border-background/20"
+        className="absolute left-3 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-background/10 backdrop-blur-sm flex items-center justify-center text-background hover:bg-background/20 transition-colors border border-background/20 touch-target min-w-[44px] min-h-[44px]"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
@@ -150,7 +150,7 @@ export default function HeroCarousel() {
       <button
         type="button"
         onClick={next}
-        className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-background/10 backdrop-blur-sm flex items-center justify-center text-background hover:bg-background/20 transition-colors border border-background/20"
+        className="absolute right-3 sm:right-4 md:right-6 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-background/10 backdrop-blur-sm flex items-center justify-center text-background hover:bg-background/20 transition-colors border border-background/20 touch-target min-w-[44px] min-h-[44px]"
         aria-label="Next slide"
       >
         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />

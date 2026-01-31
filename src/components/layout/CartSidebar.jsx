@@ -51,9 +51,9 @@ export default function CartSidebar() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-background z-50 shadow-2xl flex flex-col"
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-background z-50 shadow-2xl flex flex-col pt-[env(safe-area-inset-top)]"
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-border">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-primary" />
                 <h2 className="text-lg font-serif font-semibold">Your Cart</h2>
@@ -63,7 +63,8 @@ export default function CartSidebar() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsCartOpen(false)}
-                className="hover:bg-muted/50"
+                className="hover:bg-muted/50 h-11 w-11 sm:h-10 sm:w-10 touch-target"
+                aria-label="Close cart"
               >
                 <X className="w-5 h-5" />
               </Button>
