@@ -1,65 +1,176 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ArrowRight, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import ProductCard from '@/components/ui/ProductCard';
+import HeroCarousel from '@/components/sections/HeroCarousel';
+import CategoriesSection from '@/components/sections/CategoriesSection';
+import PopularProductsSection from '@/components/sections/PopularProductsSection';
+import RecentlyViewedSection from '@/components/sections/RecentlyViewedSection';
+import GuidanceSection from '@/components/sections/GuidanceSection';
+import WhyChooseUsSection from '@/components/sections/WhyChooseUsSection';
+import TeamExpertsSection from '@/components/sections/TeamExpertsSection';
+import TestimonialsSection from '@/components/sections/TestimonialsSection';
+import BlogSection from '@/components/sections/BlogSection';
+import { getNewArrivals } from '@/data/products';
+
+function NewArrivalsSection() {
+  const newProducts = getNewArrivals();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <section className="section-padding">
+      <div className="container">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
+          <div>
+            <motion.span
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-xs font-medium text-accent uppercase tracking-widest"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Just Arrived
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold mt-2"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+              New Arrivals
+            </motion.h2>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, x: 16 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <Button variant="outline" asChild className="group border-border">
+              <Link href="/category/crystals">
+                View All New
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </Button>
+          </motion.div>
         </div>
-      </main>
-    </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {newProducts.slice(0, 4).map((product, index) => (
+            <ProductCard key={product.id} product={product} index={index} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function NewsletterSection() {
+  return (
+    <section className="py-12 md:py-16">
+      <div className="container">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-secondary p-8 md:p-12"
+        >
+          <div className="absolute inset-0 sacred-pattern opacity-5" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-background/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="relative z-10 max-w-xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-background/15 rounded-full text-xs font-medium text-primary-foreground mb-4">
+              <Sparkles className="w-3.5 h-3.5" />
+              Exclusive Benefits
+            </div>
+            <h2 className="text-xl md:text-3xl font-serif font-bold text-primary-foreground mb-3">
+              Receive Divine Blessings & Offers
+            </h2>
+            <p className="text-sm md:text-base text-primary-foreground/80 mb-6 max-w-md mx-auto">
+              Subscribe for exclusive discounts, spiritual insights, and early access to new arrivals.
+            </p>
+            <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              <Input
+                type="email"
+                placeholder="Your email address"
+                className="flex-1 h-11 px-4 bg-background/15 border-background/20 text-primary-foreground placeholder:text-primary-foreground/50 focus:border-background/40 focus:ring-background/20"
+              />
+              <Button size="lg" className="h-11 bg-foreground text-background hover:bg-foreground/90">
+                Subscribe
+              </Button>
+            </form>
+            <p className="text-[11px] text-primary-foreground/60 mt-4">
+              No spam, unsubscribe anytime. Read our Privacy Policy.
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+export default function HomePage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-fade-in-up');
+            entry.target.classList.remove('opacity-0', 'translate-y-8');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    );
+    const animatedElements = document.querySelectorAll('.observe');
+    animatedElements.forEach((el) => {
+      el.classList.add('opacity-0', 'translate-y-8', 'transition-all', 'duration-700');
+      observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <main className="overflow-hidden">
+      <HeroCarousel />
+      <CategoriesSection />
+      <PopularProductsSection />
+      <NewArrivalsSection />
+      <RecentlyViewedSection />
+      <GuidanceSection />
+      <WhyChooseUsSection />
+      <TeamExpertsSection />
+      <TestimonialsSection />
+      <BlogSection />
+      <NewsletterSection />
+      <style jsx global>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 0.6s ease-out forwards;
+        }
+      `}</style>
+    </main>
   );
 }
