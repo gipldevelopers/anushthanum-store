@@ -126,11 +126,11 @@ export default function WishlistPage() {
                           Best
                         </span>
                       )}
-                      {discount > 0 && (
+                      {/* {discount > 0 && (
                         <span className="badge-discount text-[10px] px-1.5 py-0.5">
                           -{discount}%
                         </span>
-                      )}
+                      )} */}
                     </div>
                   </Link>
 

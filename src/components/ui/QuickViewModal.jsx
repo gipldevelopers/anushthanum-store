@@ -106,7 +106,7 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
               <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                 {product.isBestseller && <span className="badge-bestseller">Bestseller</span>}
                 {product.isNew && <span className="badge-new">New</span>}
-                {discount > 0 && <span className="badge-discount">-{discount}%</span>}
+                {/* {discount > 0 && <span className="badge-discount">-{discount}%</span>} */}
               </div>
             </div>
             {product.images.length > 1 && (
