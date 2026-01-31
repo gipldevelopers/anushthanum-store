@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -48,8 +49,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { products } from '@/data/products';
+import { useAuth } from '@/context/AuthContext';
 
-const mockUser = {
+const defaultUser = {
   name: 'Arjun Sharma',
   email: 'arjun.sharma@example.com',
   phone: '+91 98765 43210',
@@ -142,11 +144,40 @@ const menuItems = [
 ];
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { user: authUser, isAuthenticated, isLoading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [wishlistItems] = useState(products.slice(0, 4));
 
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      router.replace('/signin');
+      return;
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  const mockUser = authUser
+    ? {
+        name: authUser.name || defaultUser.name,
+        email: authUser.email || defaultUser.email,
+        phone: authUser.phone || defaultUser.phone,
+        avatar: defaultUser.avatar,
+        memberSince: authUser.memberSince || defaultUser.memberSince,
+        spiritualLevel: defaultUser.spiritualLevel,
+      }
+    : defaultUser;
+
   const getStatusConfig = (status) =>
     statusConfig[status] || statusConfig.processing;
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-muted/30">
@@ -240,6 +271,10 @@ export default function ProfilePage() {
                     <Separator className="my-2" />
                     <button
                       type="button"
+                      onClick={() => {
+                        signOut();
+                        router.push('/signin');
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-destructive hover:bg-destructive/10 transition-colors"
                     >
                       <LogOut className="w-5 h-5" />

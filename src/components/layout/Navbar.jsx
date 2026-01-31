@@ -504,7 +504,7 @@ const mobileNavItems = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Track Order', href: '/track-order', icon: Package },
   { label: 'Contact Us', href: '/contact', icon: Phone },
-  { label: 'About Us', href: '/about', icon: Info },
+  // { label: 'About Us', href: '/about', icon: Info },
 ];
 
 export default function Navbar() {
@@ -951,7 +951,7 @@ export default function Navbar() {
                   {/* Profile Actions */}
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <Link
-                      href="/auth/login"
+                      href="/signin"
                       className="flex items-center justify-center gap-2 py-2.5 px-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
                       onClick={() => setIsMenuOpen(false)}
                     >
@@ -1059,24 +1059,24 @@ export default function Navbar() {
                   </Link>
 
                   {/* Order History */}
-                  <Link
+                  {/* <Link
                     href="/orders"
                     className="flex items-center gap-3 py-2.5 px-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Package className="w-5 h-5" />
                     <span>My Orders</span>
-                  </Link>
+                  </Link> */}
 
                   {/* Addresses */}
-                  <Link
+                  {/* <Link
                     href="/addresses"
                     className="flex items-center gap-3 py-2.5 px-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Home className="w-5 h-5" />
                     <span>My Addresses</span>
-                  </Link>
+                  </Link> */}
 
                   {/* Contact Info */}
                   <a
