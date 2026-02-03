@@ -454,7 +454,29 @@ const navItems = [
     label: 'Rudraksha',
     href: '/category/rudraksha',
     dropdown: [
-      { label: 'Rudraksha Beads', href: '/category/rudraksha?type=beads' },
+      {
+        label: 'Rudraksha Beads',
+        href: '/category/rudraksha?type=beads',
+        subdropdown: [
+          { label: '1 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=1' },
+          { label: '2 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=2' },
+          { label: '3 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=3' },
+          { label: '4 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=4' },
+          { label: '5 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=5' },
+          { label: '6 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=6' },
+          { label: '7 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=7' },
+          { label: '8 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=8' },
+          { label: '9 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=9' },
+          { label: '10 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=10' },
+          { label: '11 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=11' },
+          { label: '12 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=12' },
+          { label: '13 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=13' },
+          { label: '14 Mukhi Rudraksha', href: '/category/rudraksha?type=beads&mukhi=14' },
+          { label: 'Gauri Shankar', href: '/category/rudraksha?type=beads&special=gauri-shankar' },
+          { label: 'Ganesh Rudraksha', href: '/category/rudraksha?type=beads&special=ganesh' },
+          { label: 'Trijuti Rudraksha', href: '/category/rudraksha?type=beads&special=trijuti' },
+        ]
+      },
       { label: 'Rudraksha Bracelet', href: '/category/bracelets?type=rudraksha' },
       { label: 'Rudraksha Mala', href: '/category/rudraksha?type=mala' },
     ],
@@ -463,27 +485,74 @@ const navItems = [
     label: 'Yantra',
     href: '/category/yantra',
     dropdown: [
-      { label: 'Sri Yantra', href: '/category/yantra?type=sri' },
-      { label: 'Navgraha Yantra', href: '/category/yantra?type=navgraha' },
-      { label: 'Yantra Pendants', href: '/category/yantra?type=pendant' },
+      { label: 'Sacred Yantras', href: '/category/yantra?type=sacred' },
+      { label: 'Protection Yantras', href: '/category/yantra?type=protection' },
+      { label: 'Wealth Yantras', href: '/category/yantra?type=wealth' },
+      { label: 'Healing Yantras', href: '/category/yantra?type=healing' },
+      { label: 'Yantra Energization', href: '/category/yantra?type=energization' },
     ],
   },
   {
     label: 'Bracelets',
     href: '/category/bracelets',
     dropdown: [
+      { label: 'Healing Bracelets', href: '/category/bracelets?type=healing' },
+      { label: 'Prosperity Bracelets', href: '/category/bracelets?type=prosperity' },
+      { label: 'Protection Bracelets', href: '/category/bracelets?type=protection' },
+      { label: 'Love Bracelets', href: '/category/bracelets?type=love' },
       { label: 'Rudraksha Bracelets', href: '/category/bracelets?type=rudraksha' },
-      { label: 'Crystal Bracelets', href: '/category/bracelets?type=crystal' },
-      { label: 'Gemstone Bracelets', href: '/category/bracelets?type=gemstone' },
+    ],
+  },
+  {
+    label: 'Malas',
+    href: '/category/malas',
+    dropdown: [
+      { label: 'Rudraksha Malas', href: '/category/malas?type=rudraksha' },
+      { label: 'Crystal Malas', href: '/category/malas?type=crystal' },
+      { label: 'Jap Malas', href: '/category/malas?type=jap' },
+      { label: 'Custom Malas', href: '/category/malas?type=custom' },
     ],
   },
   {
     label: 'Crystals',
     href: '/category/crystals',
     dropdown: [
-      { label: 'Healing Crystals', href: '/category/crystals?type=healing' },
-      { label: 'Crystal Spheres', href: '/category/crystals?type=sphere' },
-      { label: 'Crystal Points', href: '/category/crystals?type=points' },
+      {
+        label: 'By Type',
+        href: '/category/crystals?filter=type',
+        subdropdown: [
+          { label: 'Rose Quartz', href: '/category/crystals?type=rose-quartz' },
+          { label: 'Citrine', href: '/category/crystals?type=citrine' },
+          { label: 'Amethyst', href: '/category/crystals?type=amethyst' },
+          { label: 'Black Tourmaline', href: '/category/crystals?type=black-tourmaline' },
+          { label: 'Clear Quartz', href: '/category/crystals?type=clear-quartz' },
+        ]
+      },
+      {
+        label: 'By Intention',
+        href: '/category/crystals?filter=intention',
+        subdropdown: [
+          { label: 'Healing', href: '/category/crystals?intention=healing' },
+          { label: 'Protection', href: '/category/crystals?intention=protection' },
+          { label: 'Love & Harmony', href: '/category/crystals?intention=love-harmony' },
+          { label: 'Abundance', href: '/category/crystals?intention=abundance' },
+          { label: 'Calm & Meditation', href: '/category/crystals?intention=calm-meditation' },
+        ]
+      },
+    ],
+  },
+  {
+    label: 'Rituals',
+    href: '/category/rituals',
+    dropdown: [
+      { label: 'Pooja Kits', href: '/category/rituals?type=pooja-kits' },
+      { label: 'Samagri', href: '/category/rituals?type=samagri' },
+      { label: 'Ritual Oils', href: '/category/rituals?type=ritual-oils' },
+      { label: 'Sacred Accessories', href: '/category/rituals?type=sacred-accessories' },
+      { label: 'Incense / Dhoop', href: '/category/rituals?type=incense-dhoop' },
+      { label: 'Meditation Candles', href: '/category/rituals?type=meditation-candles' },
+      { label: 'Smudge Sticks', href: '/category/rituals?type=smudge-sticks' },
+      { label: 'Jap Malas', href: '/category/rituals?type=jap-malas' },
     ],
   },
   {
@@ -502,7 +571,7 @@ const navItems = [
 
 const mobileNavItems = [
   { label: 'Home', href: '/', icon: Home },
-  { label: 'Track Order', href: '/track-order', icon: Package },
+  // { label: 'Track Order', href: '/track-order', icon: Package },
   { label: 'Contact Us', href: '/contact', icon: Phone },
   // { label: 'About Us', href: '/about', icon: Info },
 ];
@@ -511,6 +580,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [activeSubdropdown, setActiveSubdropdown] = useState(null);
   const [expandedItems, setExpandedItems] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -866,20 +936,25 @@ export default function Navbar() {
       <nav className="bg-background border-b border-border hidden lg:block">
         <div className="container">
           <div className="flex items-center justify-center gap-1">
+            <Link href="/" className="nav-link py-3">
+              Home
+            </Link>
             {navItems.map((item) => (
               <div
                 key={item.label}
                 className="relative"
                 onMouseEnter={() => setActiveDropdown(item.label)}
-                onMouseLeave={() => setActiveDropdown(null)}
+                onMouseLeave={() => {
+                  setActiveDropdown(null);
+                  setActiveSubdropdown(null);
+                }}
               >
                 <Link href={item.href} className="nav-link flex items-center gap-1 py-3">
                   {item.label}
                   {item.dropdown && (
                     <ChevronDown
-                      className={`w-3.5 h-3.5 transition-transform ${
-                        activeDropdown === item.label ? 'rotate-180' : ''
-                      }`}
+                      className={`w-3.5 h-3.5 transition-transform ${activeDropdown === item.label ? 'rotate-180' : ''
+                        }`}
                     />
                   )}
                 </Link>
@@ -893,23 +968,55 @@ export default function Navbar() {
                       className="absolute top-full left-0 mt-0 w-52 py-1.5 bg-background rounded-lg shadow-lg border border-border z-50"
                     >
                       {item.dropdown.map((subItem) => (
-                        <Link
+                        <div
                           key={subItem.label}
-                          href={subItem.href}
-                          className="block px-4 py-2 text-sm text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
+                          className="relative"
+                          onMouseEnter={() => subItem.subdropdown && setActiveSubdropdown(subItem.label)}
+                          onMouseLeave={() => setActiveSubdropdown(null)}
                         >
-                          {subItem.label}
-                        </Link>
+                          <Link
+                            href={subItem.href}
+                            className="flex items-center justify-between px-4 py-2 text-sm text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
+                          >
+                            <span>{subItem.label}</span>
+                            {subItem.subdropdown && (
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            )}
+                          </Link>
+
+                          {/* Subdropdown */}
+                          <AnimatePresence>
+                            {subItem.subdropdown && activeSubdropdown === subItem.label && (
+                              <motion.div
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -8 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute left-full top-0 ml-1 w-56 py-1.5 bg-background rounded-lg shadow-lg border border-border z-50 max-h-96 overflow-y-auto"
+                              >
+                                {subItem.subdropdown.map((nestedItem) => (
+                                  <Link
+                                    key={nestedItem.label}
+                                    href={nestedItem.href}
+                                    className="block px-4 py-2 text-sm text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
+                                  >
+                                    {nestedItem.label}
+                                  </Link>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       ))}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             ))}
-            <Link href="/track-order" className="nav-link flex items-center gap-1.5 py-3">
+            {/* <Link href="/track-order" className="nav-link flex items-center gap-1.5 py-3">
               <Package className="w-4 h-4" />
               Track Order
-            </Link>
+            </Link> */}
             <Link href="/contact" className="nav-link py-3">
               Contact Us
             </Link>
@@ -932,7 +1039,7 @@ export default function Navbar() {
               className="absolute inset-0 bg-black/50"
               onClick={() => setIsMenuOpen(false)}
             />
-            
+
             {/* Menu Panel */}
             <div className="absolute inset-y-0 left-0 w-3/4 max-w-sm bg-background shadow-xl overflow-y-auto">
               <div className="p-4">
@@ -947,7 +1054,7 @@ export default function Navbar() {
                       <p className="text-sm text-muted-foreground">Sign in for better experience</p>
                     </div>
                   </div>
-                  
+
                   {/* Profile Actions */}
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <Link
@@ -990,14 +1097,13 @@ export default function Navbar() {
                             aria-label={expandedItems[item.label] ? 'Collapse' : 'Expand'}
                           >
                             <ChevronRight
-                              className={`w-4 h-4 transition-transform duration-200 ${
-                                expandedItems[item.label] ? 'rotate-90' : ''
-                              }`}
+                              className={`w-4 h-4 transition-transform duration-200 ${expandedItems[item.label] ? 'rotate-90' : ''
+                                }`}
                             />
                           </Button>
                         )}
                       </div>
-                      
+
                       {/* Collapsible Dropdown */}
                       <AnimatePresence>
                         {item.dropdown && expandedItems[item.label] && (
@@ -1010,14 +1116,57 @@ export default function Navbar() {
                           >
                             <div className="ml-2 pl-3 border-l-2 border-border space-y-1">
                               {item.dropdown.map((subItem) => (
-                                <Link
-                                  key={subItem.label}
-                                  href={subItem.href}
-                                  className="block py-2.5 px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
-                                  onClick={() => setIsMenuOpen(false)}
-                                >
-                                  {subItem.label}
-                                </Link>
+                                <div key={subItem.label}>
+                                  <div className="flex items-center justify-between">
+                                    <Link
+                                      href={subItem.href}
+                                      className="flex-1 py-2.5 px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+                                      onClick={() => setIsMenuOpen(false)}
+                                    >
+                                      {subItem.label}
+                                    </Link>
+                                    {subItem.subdropdown && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => toggleItem(subItem.label)}
+                                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                        aria-label={expandedItems[subItem.label] ? 'Collapse' : 'Expand'}
+                                      >
+                                        <ChevronRight
+                                          className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedItems[subItem.label] ? 'rotate-90' : ''
+                                            }`}
+                                        />
+                                      </Button>
+                                    )}
+                                  </div>
+
+                                  {/* Nested Subdropdown */}
+                                  <AnimatePresence>
+                                    {subItem.subdropdown && expandedItems[subItem.label] && (
+                                      <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="ml-2 pl-3 border-l-2 border-border/50 space-y-1 mt-1">
+                                          {subItem.subdropdown.map((nestedItem) => (
+                                            <Link
+                                              key={nestedItem.label}
+                                              href={nestedItem.href}
+                                              className="block py-2 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+                                              onClick={() => setIsMenuOpen(false)}
+                                            >
+                                              {nestedItem.label}
+                                            </Link>
+                                          ))}
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
                               ))}
                             </div>
                           </motion.div>
@@ -1040,7 +1189,7 @@ export default function Navbar() {
                       {item.label}
                     </Link>
                   ))}
-                  
+
                   {/* Wishlist in Mobile Menu */}
                   <Link
                     href="/wishlist"
