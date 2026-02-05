@@ -451,12 +451,26 @@ import { products } from '@/data/products';
 
 const navItems = [
   {
+    label: 'Home',
+    href: '/',
+  },
+  {
     label: 'Rudraksha',
     href: '/category/rudraksha',
     dropdown: [
       { label: 'Rudraksha Beads', href: '/category/rudraksha?type=beads' },
       { label: 'Rudraksha Bracelet', href: '/category/bracelets?type=rudraksha' },
       { label: 'Rudraksha Mala', href: '/category/rudraksha?type=mala' },
+    ],
+  },
+  {
+    label: 'Malas',
+    href: '/category/malas',
+    dropdown: [
+      { label: 'Rudraksha Mala', href: '/category/malas?type=rudraksha' },
+      { label: 'Crystal Mala', href: '/category/malas?type=crystal' },
+      { label: 'Tulsi Mala', href: '/category/malas?type=tulsi' },
+      { label: 'Sandalwood Mala', href: '/category/malas?type=sandalwood' },
     ],
   },
   {
@@ -487,15 +501,18 @@ const navItems = [
     ],
   },
   {
-    label: 'Guidance',
-    href: '/guidance/choosing-consciously',
+    label: 'Shop by Intention',
+    href: '/browse-by-intention',
+  },
+  {
+    label: 'Articles',
+    href: '/blog',
     dropdown: [
-      { label: 'Choosing Consciously', href: '/guidance/choosing-consciously' },
-      { label: 'Suitability Guide', href: '/guidance/suitability' },
-      { label: 'Browse by Intention', href: '/browse-by-intention' },
-      { label: 'Education Center', href: '/education' },
-      { label: 'Our Process', href: '/energization' },
-      { label: 'Disclaimer', href: '/disclaimer' },
+      { label: 'All Articles', href: '/blog' },
+      { label: 'Astrology Insights', href: '/blog?category=astrology' },
+      { label: 'Spiritual Guidance', href: '/blog?category=spiritual' },
+      { label: 'Product Education', href: '/blog?category=education' },
+      { label: 'Occult Science', href: '/blog?category=occult' },
     ],
   },
 ];
@@ -873,7 +890,10 @@ export default function Navbar() {
                 onMouseEnter={() => setActiveDropdown(item.label)}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
-                <Link href={item.href} className="nav-link flex items-center gap-1 py-3">
+                <Link
+                  href={item.href}
+                  className="nav-link flex items-center gap-1 py-3"
+                >
                   {item.label}
                   {item.dropdown && (
                     <ChevronDown
@@ -906,10 +926,6 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
             ))}
-            <Link href="/track-order" className="nav-link flex items-center gap-1.5 py-3">
-              <Package className="w-4 h-4" />
-              Track Order
-            </Link>
             <Link href="/contact" className="nav-link py-3">
               Contact Us
             </Link>
