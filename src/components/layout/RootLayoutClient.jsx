@@ -20,6 +20,7 @@ const AUTH_ROUTES = ['/signin', '/signup', '/forgot-password'];
 export default function RootLayoutClient({ children }) {
   const pathname = usePathname();
   const isAuthRoute = AUTH_ROUTES.includes(pathname || '');
+  const isAdminRoute = pathname?.startsWith('/admin');
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -29,7 +30,11 @@ export default function RootLayoutClient({ children }) {
             <WishlistProvider>
               <RecentlyViewedProvider>
                 <Toaster richColors position="top-center" />
-                {isAuthRoute ? (
+                {isAdminRoute ? (
+                  <div className="min-h-screen">
+                    {children}
+                  </div>
+                ) : isAuthRoute ? (
                   <div className="auth-page-shell relative z-10" role="main" aria-label="Sign in or sign up">
                     {children}
                   </div>

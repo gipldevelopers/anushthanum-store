@@ -9,33 +9,43 @@ import { Button } from '@/components/ui/button';
 const slides = [
   {
     image: '/images/hero/hero-1.jpg',
-    title: 'Authentic Rudraksha',
-    subtitle: 'From the Sacred Himalayas',
+    subtitle: 'Authentic Spiritual Products',
+    title: 'Sacred Tools for Your Spiritual Journey',
     description:
-      'Lab-certified Rudraksha beads sourced directly from Nepal. Temple-energized for maximum spiritual benefits.',
-    cta: 'Shop Rudraksha',
-    link: '/category/rudraksha',
+      'Discover lab-certified Rudraksha, energized Yantras, and healing crystals with complete practice guidance.',
+    cta: 'Explore Collection',
+    link: '/browse-by-intention',
     badges: ['Lab Certified', '100% Authentic'],
   },
   {
     image: '/images/hero/hero-2.jpg',
-    title: 'Sacred Yantras',
-    subtitle: 'Divine Geometry',
+    subtitle: 'Premium Rudraksha',
+    title: 'Temple-Energized Rudraksha Beads',
     description:
-      'Temple-energized Yantras crafted by master artisans. Attract abundance and positive energy into your life.',
-    cta: 'Explore Yantras',
-    link: '/category/yantra',
+      'Each bead is authenticated, blessed through traditional Vedic rituals, and comes with personalized wearing guidance.',
+    cta: 'Shop Rudraksha',
+    link: '/category/rudraksha',
     badges: ['Temple Energized', 'Master Crafted'],
   },
   {
     image: '/images/hero/hero-3.jpg',
-    title: 'Healing Crystals',
-    subtitle: 'Balance Your Energy',
+    subtitle: 'Healing Crystals',
+    title: 'Natural Crystals with Purpose',
     description:
-      'Natural crystals and gemstones for healing, meditation, and spiritual transformation.',
-    cta: 'View Crystals',
+      'Ethically sourced crystals selected for their energy. Learn which stones align with you before you buy.',
+    cta: 'Discover Crystals',
     link: '/category/crystals',
     badges: ['Natural Stones', 'Gem Certified'],
+  },
+  {
+    image: '/images/hero/hero-blog.jpg',
+    subtitle: 'Knowledge First',
+    title: 'Learn Before You Practice',
+    description:
+      'We teach method, not sell hope. Access free guides on spiritual practices, product education, and sacred wisdom.',
+    cta: 'Read Articles',
+    link: '/blog',
+    badges: ['Free Guides', 'Expert Insights'],
   },
 ];
 
@@ -103,7 +113,7 @@ export default function HeroCarousel() {
                         </span>
                       ))}
                     </div>
-                    <span className="text-sm font-medium text-primary uppercase tracking-widest">
+                    <span className="text-xs sm:text-sm font-medium text-primary uppercase tracking-[0.25em]">
                       {slide.subtitle}
                     </span>
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mt-2 mb-4 leading-tight text-background">

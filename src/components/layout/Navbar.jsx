@@ -451,6 +451,10 @@ import { products } from '@/data/products';
 
 const navItems = [
   {
+    label: 'Home',
+    href: '/',
+  },
+  {
     label: 'Rudraksha',
     href: '/category/rudraksha',
     dropdown: [
@@ -479,6 +483,16 @@ const navItems = [
       },
       { label: 'Rudraksha Bracelet', href: '/category/bracelets?type=rudraksha' },
       { label: 'Rudraksha Mala', href: '/category/rudraksha?type=mala' },
+    ],
+  },
+  {
+    label: 'Malas',
+    href: '/category/malas',
+    dropdown: [
+      { label: 'Rudraksha Mala', href: '/category/malas?type=rudraksha' },
+      { label: 'Crystal Mala', href: '/category/malas?type=crystal' },
+      { label: 'Tulsi Mala', href: '/category/malas?type=tulsi' },
+      { label: 'Sandalwood Mala', href: '/category/malas?type=sandalwood' },
     ],
   },
   {
@@ -517,54 +531,24 @@ const navItems = [
     label: 'Crystals',
     href: '/category/crystals',
     dropdown: [
-      {
-        label: 'By Type',
-        href: '/category/crystals?filter=type',
-        subdropdown: [
-          { label: 'Rose Quartz', href: '/category/crystals?type=rose-quartz' },
-          { label: 'Citrine', href: '/category/crystals?type=citrine' },
-          { label: 'Amethyst', href: '/category/crystals?type=amethyst' },
-          { label: 'Black Tourmaline', href: '/category/crystals?type=black-tourmaline' },
-          { label: 'Clear Quartz', href: '/category/crystals?type=clear-quartz' },
-        ]
-      },
-      {
-        label: 'By Intention',
-        href: '/category/crystals?filter=intention',
-        subdropdown: [
-          { label: 'Healing', href: '/category/crystals?intention=healing' },
-          { label: 'Protection', href: '/category/crystals?intention=protection' },
-          { label: 'Love & Harmony', href: '/category/crystals?intention=love-harmony' },
-          { label: 'Abundance', href: '/category/crystals?intention=abundance' },
-          { label: 'Calm & Meditation', href: '/category/crystals?intention=calm-meditation' },
-        ]
-      },
+      { label: 'Healing Crystals', href: '/category/crystals?type=healing' },
+      { label: 'Crystal Spheres', href: '/category/crystals?type=sphere' },
+      { label: 'Crystal Points', href: '/category/crystals?type=points' },
     ],
   },
   {
-    label: 'Rituals',
-    href: '/category/rituals',
-    dropdown: [
-      { label: 'Pooja Kits', href: '/category/rituals?type=pooja-kits' },
-      { label: 'Samagri', href: '/category/rituals?type=samagri' },
-      { label: 'Ritual Oils', href: '/category/rituals?type=ritual-oils' },
-      { label: 'Sacred Accessories', href: '/category/rituals?type=sacred-accessories' },
-      { label: 'Incense / Dhoop', href: '/category/rituals?type=incense-dhoop' },
-      { label: 'Meditation Candles', href: '/category/rituals?type=meditation-candles' },
-      { label: 'Smudge Sticks', href: '/category/rituals?type=smudge-sticks' },
-      { label: 'Jap Malas', href: '/category/rituals?type=jap-malas' },
-    ],
+    label: 'Shop by Intention',
+    href: '/browse-by-intention',
   },
   {
-    label: 'Guidance',
-    href: '/guidance/choosing-consciously',
+    label: 'Articles',
+    href: '/blog',
     dropdown: [
-      { label: 'Choosing Consciously', href: '/guidance/choosing-consciously' },
-      { label: 'Suitability Guide', href: '/guidance/suitability' },
-      { label: 'Browse by Intention', href: '/browse-by-intention' },
-      { label: 'Education Center', href: '/education' },
-      { label: 'Our Process', href: '/energization' },
-      { label: 'Disclaimer', href: '/disclaimer' },
+      { label: 'All Articles', href: '/blog' },
+      { label: 'Astrology Insights', href: '/blog?category=astrology' },
+      { label: 'Spiritual Guidance', href: '/blog?category=spiritual' },
+      { label: 'Product Education', href: '/blog?category=education' },
+      { label: 'Occult Science', href: '/blog?category=occult' },
     ],
   },
 ];
@@ -949,7 +933,10 @@ export default function Navbar() {
                   setActiveSubdropdown(null);
                 }}
               >
-                <Link href={item.href} className="nav-link flex items-center gap-1 py-3">
+                <Link
+                  href={item.href}
+                  className="nav-link flex items-center gap-1 py-3"
+                >
                   {item.label}
                   {item.dropdown && (
                     <ChevronDown
@@ -970,53 +957,17 @@ export default function Navbar() {
                       {item.dropdown.map((subItem) => (
                         <div
                           key={subItem.label}
-                          className="relative"
-                          onMouseEnter={() => subItem.subdropdown && setActiveSubdropdown(subItem.label)}
-                          onMouseLeave={() => setActiveSubdropdown(null)}
+                          href={subItem.href}
+                          className="block px-4 py-2 text-sm text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
                         >
-                          <Link
-                            href={subItem.href}
-                            className="flex items-center justify-between px-4 py-2 text-sm text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
-                          >
-                            <span>{subItem.label}</span>
-                            {subItem.subdropdown && (
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            )}
-                          </Link>
-
-                          {/* Subdropdown */}
-                          <AnimatePresence>
-                            {subItem.subdropdown && activeSubdropdown === subItem.label && (
-                              <motion.div
-                                initial={{ opacity: 0, x: -8 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -8 }}
-                                transition={{ duration: 0.15 }}
-                                className="absolute left-full top-0 ml-1 w-56 py-1.5 bg-background rounded-lg shadow-lg border border-border z-50 max-h-96 overflow-y-auto"
-                              >
-                                {subItem.subdropdown.map((nestedItem) => (
-                                  <Link
-                                    key={nestedItem.label}
-                                    href={nestedItem.href}
-                                    className="block px-4 py-2 text-sm text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
-                                  >
-                                    {nestedItem.label}
-                                  </Link>
-                                ))}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                          {subItem.label}
+                        </Link>
                       ))}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             ))}
-            {/* <Link href="/track-order" className="nav-link flex items-center gap-1.5 py-3">
-              <Package className="w-4 h-4" />
-              Track Order
-            </Link> */}
             <Link href="/contact" className="nav-link py-3">
               Contact Us
             </Link>

@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ProductCard from '@/components/ui/ProductCard';
 import HeroCarousel from '@/components/sections/HeroCarousel';
+import LearningJourneySection from '@/components/sections/LearningJourneySection';
 import CategoriesSection from '@/components/sections/CategoriesSection';
 import PopularProductsSection from '@/components/sections/PopularProductsSection';
 import RecentlyViewedSection from '@/components/sections/RecentlyViewedSection';
@@ -82,14 +83,14 @@ function NewsletterSection() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-background/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="relative z-10 max-w-xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-background/15 rounded-full text-xs font-medium text-primary-foreground mb-4">
-              <Sparkles className="w-3.5 h-3.5" />
-              Exclusive Benefits
+              <BookOpen className="w-3.5 h-3.5" />
+              Learn & Grow
             </div>
             <h2 className="text-xl md:text-3xl font-serif font-bold text-primary-foreground mb-3">
-              Receive Divine Blessings & Offers
+              Receive Wisdom & Guidance
             </h2>
             <p className="text-sm md:text-base text-primary-foreground/80 mb-6 max-w-md mx-auto">
-              Subscribe for exclusive discounts, spiritual insights, and early access to new arrivals.
+              Subscribe for spiritual insights, practice guides, and mindful product education — no spam, just wisdom.
             </p>
             <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <Input
@@ -102,7 +103,7 @@ function NewsletterSection() {
               </Button>
             </form>
             <p className="text-[11px] text-primary-foreground/60 mt-4">
-              No spam, unsubscribe anytime. Read our Privacy Policy.
+              We teach method, not sell hope. Read our Privacy Policy.
             </p>
           </div>
         </motion.div>
@@ -146,6 +147,7 @@ export default function HomePage() {
   return (
     <main className="overflow-hidden">
       <HeroCarousel />
+      <LearningJourneySection />
       <CategoriesSection />
       <PopularProductsSection />
       <NewArrivalsSection />
