@@ -13,11 +13,35 @@ import {
   Facebook,
   Twitter,
   ChevronRight,
+  BookOpen,
+  CircleDot,
+  Triangle,
+  Gem,
+  Flower2,
+  Star,
+  Flame,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { getBlogBySlug, blogPosts, blogCategories } from '@/data/blogs';
+
+const categoryIcons = {
+  BookOpen,
+  CircleDot,
+  Triangle,
+  Gem,
+  Flower2,
+  Star,
+  Flame,
+  Sparkles,
+};
+
+function CategoryIcon({ name, className = "w-4 h-4" }) {
+  const Icon = categoryIcons[name];
+  return Icon ? <Icon className={className} /> : null;
+}
 
 function renderContent(content) {
   if (!content) return null;
@@ -150,7 +174,8 @@ export default function BlogPostPage() {
         >
           <div className="flex items-center gap-2 mb-4">
             <Badge variant="outline">
-              {categoryInfo?.icon} {categoryInfo?.name}
+              <CategoryIcon name={categoryInfo?.icon} className="w-4 h-4 mr-2" />
+              {categoryInfo?.name}
             </Badge>
             {post.isMustRead && (
               <Badge className="bg-accent text-accent-foreground">Must Read</Badge>
@@ -215,7 +240,7 @@ export default function BlogPostPage() {
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-border">
             {post.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
+              <Badge key={tag} variant="secondary" className="text-xs text-white">
                 #{tag}
               </Badge>
             ))}

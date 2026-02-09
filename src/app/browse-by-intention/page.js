@@ -222,7 +222,7 @@ export default function BrowseByIntentionPage() {
                       {getProductsBySlugs(item.products)
                         .slice(0, 2)
                         .map((product) => (
-                          <Badge key={product.id} variant="secondary" className="text-xs">
+                          <Badge key={product.id} variant="secondary" className="text-xs text-white">
                             {product.name}
                           </Badge>
                         ))}

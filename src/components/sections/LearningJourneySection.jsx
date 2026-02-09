@@ -53,7 +53,7 @@ const journeySteps = [
 
 export default function LearningJourneySection() {
   return (
-    <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/30">
+    <section className="section-padding bg-gradient-to-b from-background to-muted/30">
       <div className="container">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
@@ -160,16 +160,16 @@ export default function LearningJourneySection() {
             Ready to begin your conscious spiritual journey?
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg" className="group">
+            <Button asChild size="lg" className="group rounded-full px-8">
               <Link href="/browse-by-intention">
                 Shop by Intention
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="rounded-full px-8">
               <Link href="/blog">
                 <BookOpen className="mr-2 w-4 h-4" />
-                Start Learning
+                Visit Knowledge Hub
               </Link>
             </Button>
           </div>

@@ -1,12 +1,12 @@
 export const blogCategories = [
-  { id: 'all', name: 'All Articles', icon: '📚' },
-  { id: 'rudraksha', name: 'Rudraksha Guide', icon: '📿' },
-  { id: 'yantra', name: 'Yantra Knowledge', icon: '🕉️' },
-  { id: 'crystals', name: 'Crystal Healing', icon: '💎' },
-  { id: 'meditation', name: 'Meditation', icon: '🧘' },
-  { id: 'astrology', name: 'Astrology', icon: '⭐' },
-  { id: 'rituals', name: 'Rituals & Practices', icon: '🪔' },
-  { id: 'wellness', name: 'Spiritual Wellness', icon: '✨' },
+  { id: 'all', name: 'All Articles', icon: 'BookOpen' },
+  { id: 'rudraksha', name: 'Rudraksha Guide', icon: 'CircleDot' },
+  { id: 'yantra', name: 'Yantra Knowledge', icon: 'Triangle' },
+  { id: 'crystals', name: 'Crystal Healing', icon: 'Gem' },
+  { id: 'meditation', name: 'Meditation', icon: 'Flower2' },
+  { id: 'astrology', name: 'Astrology', icon: 'Star' },
+  { id: 'rituals', name: 'Rituals & Practices', icon: 'Flame' },
+  { id: 'wellness', name: 'Spiritual Wellness', icon: 'Sparkles' },
 ];
 
 export const blogPosts = [
@@ -40,7 +40,7 @@ Always look for:
 - Clear, well-defined mukhis
 - Authentic Nepali or Indonesian origin
 - Lab certification`,
-    image: 'https://images.unsplash.com/photo-1609619385002-f40f1c2aa4eb?w=800',
+    image: '/images/products/rudraksha-mala.jpg',
     author: { name: 'Dr. Priya Devi', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100', role: 'Vedic Scholar' },
     date: '2024-01-20',
     readTime: '8 min read',

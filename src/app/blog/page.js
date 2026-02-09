@@ -12,6 +12,13 @@ import {
   TrendingUp,
   Bookmark,
   Sparkles,
+  BookOpen,
+  CircleDot,
+  Triangle,
+  Gem,
+  Flower2,
+  Star,
+  Flame,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,6 +31,22 @@ import {
   getFeaturedBlogs,
   getBlogsByCategory,
 } from '@/data/blogs';
+
+const categoryIcons = {
+  BookOpen,
+  CircleDot,
+  Triangle,
+  Gem,
+  Flower2,
+  Star,
+  Flame,
+  Sparkles,
+};
+
+function CategoryIcon({ name, className = "w-4 h-4" }) {
+  const Icon = categoryIcons[name];
+  return Icon ? <Icon className={className} /> : null;
+}
 
 function BlogHero() {
   const featuredPosts = getFeaturedBlogs();
@@ -130,13 +153,12 @@ function CategoryNav({ activeCategory, onCategoryChange }) {
               key={category.id}
               type="button"
               onClick={() => onCategoryChange(category.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                activeCategory === category.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === category.id
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
+                }`}
             >
-              <span>{category.icon}</span>
+              <CategoryIcon name={category.icon} className="w-4 h-4" />
               {category.name}
             </button>
           ))}
@@ -250,7 +272,8 @@ function BlogCard({ post, variant = 'default' }) {
       <div className="p-5">
         <div className="flex items-center gap-2 mb-3">
           <Badge variant="outline" className="text-[10px]">
-            {categoryInfo?.icon} {categoryInfo?.name}
+            <CategoryIcon name={categoryInfo?.icon} className="w-3 h-3 mr-1" />
+            {categoryInfo?.name}
           </Badge>
         </div>
         <Link href={`/blog/${post.slug}`}>
