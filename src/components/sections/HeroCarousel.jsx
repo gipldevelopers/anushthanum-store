@@ -9,43 +9,39 @@ import { Button } from '@/components/ui/button';
 const slides = [
   {
     image: '/images/hero/hero-1.jpg',
-    subtitle: 'Authentic Spiritual Products',
+    subtitle: 'Authentic. Energized. Certified.',
     title: 'Sacred Tools for Your Spiritual Journey',
-    description:
-      'Discover lab-certified Rudraksha, energized Yantras, and healing crystals with complete practice guidance.',
+    description: 'Experience the power of lab-certified Rudraksha, ancient Yantras, and healing crystals. Each piece is energized by Vedic scholars to help you achieve your life goals.',
     cta: 'Explore Collection',
     link: '/browse-by-intention',
-    badges: ['Lab Certified', '100% Authentic'],
+    badges: ['Lab Certified', 'Vedic Energized'],
   },
   {
     image: '/images/hero/hero-2.jpg',
-    subtitle: 'Premium Rudraksha',
-    title: 'Temple-Energized Rudraksha Beads',
-    description:
-      'Each bead is authenticated, blessed through traditional Vedic rituals, and comes with personalized wearing guidance.',
-    cta: 'Shop Rudraksha',
-    link: '/category/rudraksha',
-    badges: ['Temple Energized', 'Master Crafted'],
+    subtitle: 'Guidance First Platform',
+    title: 'Clarity Before You Buy',
+    description: 'We don’t just sell products; we provide the wisdom to use them. Get free astrological insights and detailed practice guides with every purchase.',
+    cta: 'Get Guidance',
+    link: '/guidance/choosing-consciously',
+    badges: ['Free Consultation', 'Expert Support'],
   },
   {
     image: '/images/hero/hero-3.jpg',
-    subtitle: 'Healing Crystals',
-    title: 'Natural Crystals with Purpose',
-    description:
-      'Ethically sourced crystals selected for their energy. Learn which stones align with you before you buy.',
-    cta: 'Discover Crystals',
-    link: '/category/crystals',
-    badges: ['Natural Stones', 'Gem Certified'],
+    subtitle: 'Ancient Wisdom, Modern Life',
+    title: 'Transform Your Energy',
+    description: 'Align your chakras and attract positivity with our premium collection of semi-precious stone bracelets and malas, handcrafted for durability and aesthetics.',
+    cta: 'Shop Bracelets',
+    link: '/category/bracelets',
+    badges: ['Handcrafted', 'Premium Quality'],
   },
   {
     image: '/images/hero/hero-blog.jpg',
-    subtitle: 'Knowledge First',
-    title: 'Learn Before You Practice',
-    description:
-      'We teach method, not sell hope. Access free guides on spiritual practices, product education, and sacred wisdom.',
+    subtitle: 'The Knowledge Hub',
+    title: 'Unlock Sacred Secrets',
+    description: 'Dive deep into the science of spirituality. Read our latest articles on occult sciences, planetary influences, and the correct methods of sadhana.',
     cta: 'Read Articles',
     link: '/blog',
-    badges: ['Free Guides', 'Expert Insights'],
+    badges: ['Occult Science', 'Vedic Wisdom'],
   },
 ];
 
@@ -172,9 +168,8 @@ export default function HeroCarousel() {
             key={index}
             type="button"
             onClick={() => goTo(index)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === current ? 'bg-primary w-8' : 'bg-background/40 hover:bg-background/60 w-2'
-            }`}
+            className={`h-2 rounded-full transition-all duration-300 ${index === current ? 'bg-primary w-8' : 'bg-background/40 hover:bg-background/60 w-2'
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}

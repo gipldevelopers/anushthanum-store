@@ -564,14 +564,13 @@ import {
   ArrowLeft,
   Info,
   Sparkles,
+  FileText,
+  User,
+  BookOpen,
+  HelpCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getProductBySlug, products } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -605,7 +604,7 @@ export default function ProductPage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -788,11 +787,10 @@ export default function ProductPage() {
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors snap-start ${
-                    selectedImage === index
-                      ? 'border-primary'
-                      : 'border-transparent hover:border-primary/50'
-                  }`}
+                  className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors snap-start ${selectedImage === index
+                    ? 'border-primary'
+                    : 'border-transparent hover:border-primary/50'
+                    }`}
                   style={{
                     width: isMobile ? '60px' : '80px',
                     height: isMobile ? '60px' : '80px',
@@ -844,11 +842,10 @@ export default function ProductPage() {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(product.rating)
-                          ? 'text-secondary fill-secondary'
-                          : 'text-muted-foreground/30'
-                      }`}
+                      className={`w-4 h-4 ${i < Math.floor(product.rating)
+                        ? 'text-secondary fill-secondary'
+                        : 'text-muted-foreground/30'
+                        }`}
                     />
                   ))}
                 </div>
@@ -931,11 +928,10 @@ export default function ProductPage() {
                           [variant.name]: option,
                         })
                       }
-                      className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                        selectedVariants[variant.name] === option
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border hover:border-primary'
-                      }`}
+                      className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg border text-sm font-medium transition-all ${selectedVariants[variant.name] === option
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border hover:border-primary'
+                        }`}
                     >
                       {option}
                     </button>
@@ -1011,9 +1007,8 @@ export default function ProductPage() {
                   onClick={() => toggleWishlist(product)}
                 >
                   <Heart
-                    className={`w-5 h-5 mr-2 ${
-                      isWishlisted ? 'fill-destructive text-destructive' : ''
-                    }`}
+                    className={`w-5 h-5 mr-2 ${isWishlisted ? 'fill-destructive text-destructive' : ''
+                      }`}
                   />
                   {isMobile ? (isWishlisted ? 'Saved' : 'Wishlist') : (isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist')}
                 </Button>
@@ -1064,168 +1059,174 @@ export default function ProductPage() {
         </div>
 
         {/* Product Details Accordion */}
+        {/* Product Details Tabs */}
         <div className="mb-12 md:mb-16">
-          <Accordion
-            type="multiple"
-            defaultValue={['description', 'benefits']}
-            className="space-y-4"
-          >
-            <AccordionItem value="description" className="border rounded-xl">
-              <AccordionTrigger className="px-4 md:px-6 py-4 text-base md:text-lg font-semibold hover:no-underline">
-                Product Description
-              </AccordionTrigger>
-              <AccordionContent className="px-4 md:px-6 pb-4">
-                <div className="space-y-4 text-muted-foreground">
-                  <p className="leading-relaxed">{product.description}</p>
-                  {product.materials && (
+          <Tabs defaultValue="description" className="w-full">
+            <TabsList className="w-full justify-start overflow-x-auto h-auto p-1 bg-muted/50 rounded-lg mb-6 scrollbar-hide">
+              <TabsTrigger value="description" className="flex-shrink-0 gap-2 py-2.5 px-4">
+                <FileText className="w-4 h-4" />
+                Description
+              </TabsTrigger>
+              <TabsTrigger value="benefits" className="flex-shrink-0 gap-2 py-2.5 px-4">
+                <Sparkles className="w-4 h-4" />
+                Benefits
+              </TabsTrigger>
+              <TabsTrigger value="who-should-wear" className="flex-shrink-0 gap-2 py-2.5 px-4">
+                <User className="w-4 h-4" />
+                Who Should Wear
+              </TabsTrigger>
+              <TabsTrigger value="wearing-rules" className="flex-shrink-0 gap-2 py-2.5 px-4">
+                <BookOpen className="w-4 h-4" />
+                Rules
+              </TabsTrigger>
+              <TabsTrigger value="shipping" className="flex-shrink-0 gap-2 py-2.5 px-4">
+                <Truck className="w-4 h-4" />
+                Shipping
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="description" className="animate-in fade-in-50 duration-500">
+              <div className="bg-card border rounded-2xl p-6 md:p-8 space-y-6 shadow-sm">
+                <div>
+                  <h3 className="text-xl font-serif font-bold mb-4 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    Product Description
+                  </h3>
+                  <div className="prose prose-stone max-w-none text-muted-foreground">
+                    <p className="leading-relaxed">{product.description}</p>
+                  </div>
+                </div>
+
+                {product.materials && (
+                  <div className="grid sm:grid-cols-2 gap-6 pt-6 border-t">
                     <div>
                       <h4 className="font-medium text-foreground mb-2">Materials</h4>
-                      <p>{product.materials.join(', ')}</p>
+                      <p className="text-muted-foreground">{product.materials.join(', ')}</p>
                     </div>
-                  )}
-                  {product.dimensions && (
-                    <div>
-                      <h4 className="font-medium text-foreground mb-2">
-                        Dimensions
-                      </h4>
-                      <p>{product.dimensions}</p>
-                    </div>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                    {product.dimensions && (
+                      <div>
+                        <h4 className="font-medium text-foreground mb-2">Dimensions</h4>
+                        <p className="text-muted-foreground">{product.dimensions}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
 
-            <AccordionItem value="benefits" className="border rounded-xl">
-              <AccordionTrigger className="px-4 md:px-6 py-4 text-base md:text-lg font-semibold hover:no-underline">
-                Key Benefits
-              </AccordionTrigger>
-              <AccordionContent className="px-4 md:px-6 pb-4">
-                <ul className="space-y-3">
+            <TabsContent value="benefits" className="animate-in fade-in-50 duration-500">
+              <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">
+                <h3 className="text-xl font-serif font-bold mb-6 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  Key Benefits
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-4">
                   {product.benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 text-accent" />
+                    <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-accent/5 border border-accent/10">
+                      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-4 h-4 text-accent" />
                       </div>
-                      <span>{benefit}</span>
-                    </li>
+                      <span className="text-foreground/90 font-medium">{benefit}</span>
+                    </div>
                   ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
+                </div>
+              </div>
+            </TabsContent>
 
-            <AccordionItem value="who-should-wear" className="border rounded-xl">
-              <AccordionTrigger className="px-4 md:px-6 py-4 text-base md:text-lg font-semibold hover:no-underline">
-                Who Should Wear
-              </AccordionTrigger>
-              <AccordionContent className="px-4 md:px-6 pb-4">
-                <ul className="space-y-3">
+            <TabsContent value="who-should-wear" className="animate-in fade-in-50 duration-500">
+              <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">
+                <h3 className="text-xl font-serif font-bold mb-6 flex items-center gap-2">
+                  <User className="w-5 h-5 text-primary" />
+                  Who Should Wear
+                </h3>
+                <div className="space-y-4">
                   {product.whoShouldWear.map((item, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-medium">{index + 1}</span>
-                      </div>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="wearing-rules" className="border rounded-xl">
-              <AccordionTrigger className="px-4 md:px-6 py-4 text-base md:text-lg font-semibold hover:no-underline">
-                Wearing Rules & Guidelines
-              </AccordionTrigger>
-              <AccordionContent className="px-4 md:px-6 pb-4">
-                <ul className="space-y-4">
-                  {product.wearingRules.map((rule, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center flex-shrink-0">
+                    <div key={index} className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5 font-serif font-bold text-primary">
                         {index + 1}
                       </div>
-                      <div className="flex-1">
-                        <span className="block">{rule}</span>
-                      </div>
-                    </li>
+                      <p className="text-muted-foreground leading-relaxed pt-1">{item}</p>
+                    </div>
                   ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
+                </div>
+              </div>
+            </TabsContent>
 
-            <AccordionItem value="shipping" className="border rounded-xl">
-              <AccordionTrigger className="px-4 md:px-6 py-4 text-base md:text-lg font-semibold hover:no-underline">
-                Shipping & Returns
-              </AccordionTrigger>
-              <AccordionContent className="px-4 md:px-6 pb-4">
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                      <Truck className="w-5 h-5" />
-                      Shipping Information
-                    </h4>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-2 h-2 text-green-500" />
-                        </div>
-                        <span>Free shipping on orders above ₹999</span>
+            <TabsContent value="wearing-rules" className="animate-in fade-in-50 duration-500">
+              <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">
+                <h3 className="text-xl font-serif font-bold mb-6 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  Wearing Guidelines
+                </h3>
+                <div className="grid gap-4">
+                  {product.wearingRules.map((rule, index) => (
+                    <div key={index} className="flex items-start gap-4 p-4 bg-muted/30 rounded-xl">
+                      <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {index + 1}
+                      </div>
+                      <span className="text-foreground/80">{rule}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="shipping" className="animate-in fade-in-50 duration-500">
+              <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm">
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Truck className="w-5 h-5 text-primary" />
+                      </div>
+                      <h4 className="font-semibold text-lg">Shipping Information</h4>
+                    </div>
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Free shipping on orders above ₹999
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-2 h-2 text-blue-500" />
-                        </div>
-                        <span>Standard delivery: 3-7 business days</span>
+                      <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Standard delivery: 3-7 business days
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-4 h-4 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-2 h-2 text-purple-500" />
-                        </div>
-                        <span>Express delivery available (additional charges)</span>
+                      <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Express delivery available
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-4 h-4 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-2 h-2 text-orange-500" />
-                        </div>
-                        <span>Pan-India delivery available</span>
+                      <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Pan-India delivery available
                       </li>
                     </ul>
                   </div>
 
-                  <div>
-                    <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                      <RotateCcw className="w-5 h-5" />
-                      Returns & Refunds
-                    </h4>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Info className="w-2 h-2 text-amber-500" />
-                        </div>
-                        <span>7-day return policy for unused items</span>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <RotateCcw className="w-5 h-5 text-primary" />
+                      </div>
+                      <h4 className="font-semibold text-lg">Returns & Refunds</h4>
+                    </div>
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Info className="w-4 h-4 text-amber-500" />
+                        7-day return policy for unused items
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Info className="w-2 h-2 text-amber-500" />
-                        </div>
-                        <span>Items must be in original packaging</span>
+                      <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Info className="w-4 h-4 text-amber-500" />
+                        Items must be in original packaging
                       </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-2 h-2 text-green-500" />
-                        </div>
-                        <span>Refund processed within 5-7 business days</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="w-2 h-2 text-blue-500" />
-                        </div>
-                        <span>Contact support for return requests</span>
+                      <li className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Check className="w-4 h-4 text-green-500" />
+                        Refund processed in 5-7 business days
                       </li>
                     </ul>
                   </div>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Customer Reviews */}

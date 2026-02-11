@@ -37,9 +37,9 @@ const categories = [
 
 export default function CategoriesSection() {
   return (
-    <section className="section-padding">
+    <section className="py-10">
       <div className="container">
-        <div className="text-center mb-10 md:mb-12">
+        <div className="text-center mb-6 md:mb-8">
           <motion.span
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}

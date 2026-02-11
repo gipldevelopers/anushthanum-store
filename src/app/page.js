@@ -23,9 +23,9 @@ function NewArrivalsSection() {
   const newProducts = getNewArrivals();
 
   return (
-    <section className="section-padding">
+    <section className="py-10">
       <div className="container">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
           <div>
             <motion.span
               initial={{ opacity: 0, y: 16 }}

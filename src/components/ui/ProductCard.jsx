@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Star, ShoppingCart, Heart, Eye, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star, ShoppingCart, Heart, Eye, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -13,6 +13,7 @@ export default function ProductCard({ product, index = 0 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
@@ -50,6 +51,24 @@ export default function ProductCard({ product, index = 0 }) {
     toggleWishlist(product);
   };
 
+  const nextImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+  };
+
+  const prevImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+  };
+
+  const goToImage = (e, idx) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex(idx);
+  }
+
   return (
     <>
       <motion.article
@@ -69,35 +88,77 @@ export default function ProductCard({ product, index = 0 }) {
         <button
           type="button"
           onClick={handleWishlistToggle}
-          className={`absolute top-3 right-3 z-10 w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center transition-all duration-200 border border-border/50 hover:scale-105 touch-target ${
-            isWishlisted
-              ? 'opacity-100 text-destructive'
-              : 'touch-show-hover-hide hover:bg-background hover:text-destructive'
-          }`}
+          className={`absolute top-3 right-3 z-10 w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center transition-all duration-200 border border-border/50 hover:scale-105 touch-target ${isWishlisted
+            ? 'opacity-100 text-destructive'
+            : 'touch-show-hover-hide hover:bg-background hover:text-destructive'
+            }`}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
         </button>
 
-        <Link href={`/product/${product.slug}`} className="block relative aspect-[4/5] overflow-hidden bg-muted/30">
-          <img
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
+        <div className="block relative aspect-[4/5] overflow-hidden bg-muted/30">
+          <Link href={`/product/${product.slug}`} className="absolute inset-0">
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentImageIndex}
+                src={product.images[currentImageIndex]}
+                alt={product.name}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+            </AnimatePresence>
+          </Link>
+
+          {/* Image Navigation Controls */}
+          {product.images.length > 1 && isHovered && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-background transition-colors z-20"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-background transition-colors z-20"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Pagination Dots */}
+              <div className="absolute bottom-16 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
+                {product.images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={(e) => goToImage(e, idx)}
+                    className={`w-1.5 h-1.5 rounded-full transition-all shadow-sm pointer-events-auto ${idx === currentImageIndex ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'
+                      }`}
+                    aria-label={`Go to image ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+
           <motion.div
             initial={false}
             animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-foreground/70 via-foreground/40 to-transparent pointer-events-none [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:pointer-events-auto"
+            className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-foreground/70 via-foreground/40 to-transparent pointer-events-none [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:pointer-events-auto z-20"
           >
             <div className="flex gap-2 pointer-events-auto">
               <Button
                 size="sm"
-                className={`flex-1 text-sm transition-all min-h-[44px] sm:min-h-0 ${
-                  isAddedToCart ? 'bg-accent hover:bg-accent text-accent-foreground' : 'bg-primary hover:bg-primary/90'
-                }`}
+                className={`flex-1 text-sm transition-all min-h-[44px] sm:min-h-0 ${isAddedToCart ? 'bg-accent hover:bg-accent text-accent-foreground' : 'bg-primary hover:bg-primary/90'
+                  }`}
                 onClick={handleAddToCart}
                 disabled={isAddedToCart}
               >
@@ -124,7 +185,7 @@ export default function ProductCard({ product, index = 0 }) {
               </Button>
             </div>
           </motion.div>
-        </Link>
+        </div>
 
         <div className="p-4">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">{product.category}</p>
@@ -138,11 +199,10 @@ export default function ProductCard({ product, index = 0 }) {
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-3.5 h-3.5 ${
-                    i < Math.floor(product.rating)
-                      ? 'text-secondary fill-secondary'
-                      : 'text-muted-foreground/20 fill-muted-foreground/20'
-                  }`}
+                  className={`w-3.5 h-3.5 ${i < Math.floor(product.rating)
+                    ? 'text-secondary fill-secondary'
+                    : 'text-muted-foreground/20 fill-muted-foreground/20'
+                    }`}
                 />
               ))}
             </div>

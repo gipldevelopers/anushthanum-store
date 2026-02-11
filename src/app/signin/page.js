@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -50,8 +50,13 @@ export default function SignInPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/profile');
+    }
+  }, [isAuthenticated, router]);
+
   if (isAuthenticated) {
-    router.replace('/profile');
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
@@ -106,7 +111,7 @@ export default function SignInPage() {
         <Card className="border-border shadow-lg">
           <CardHeader className="space-y-1">
             <div className="flex items-center gap-2 text-primary mb-2">
-              
+
               <span className="text-sm font-medium">Welcome back</span>
             </div>
             <CardTitle className="text-xl font-serif">Sign in</CardTitle>
