@@ -67,7 +67,7 @@ export default function HeroCarousel() {
   const next = () => goTo((current + 1) % slides.length);
 
   return (
-    <section className="relative h-[calc(100vh-80px)] sm:h-[calc(100vh-120px)] min-h-[400px] sm:min-h-[500px] overflow-hidden">
+    <section className="relative h-[60vh] min-h-[400px] max-h-[600px] overflow-hidden">
       <AnimatePresence mode="wait">
         {slides.map(
           (slide, index) =>
@@ -89,40 +89,42 @@ export default function HeroCarousel() {
                     alt={slide.title}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/60 to-foreground/20" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
                 </div>
                 <div className="relative h-full container flex items-center">
                   <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, duration: 0.5 }}
-                    className="max-w-xl text-background"
+                    className="max-w-xl text-white pt-8 md:pt-0"
                   >
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="flex flex-wrap gap-2 mb-3">
                       {slide.badges.map((badge, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-background/15 backdrop-blur-sm rounded-full text-xs font-medium text-background border border-background/20"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-sm rounded-full text-[10px] sm:text-xs font-medium text-white border border-white/20"
                         >
                           {i === 0 ? <Shield className="w-3 h-3" /> : <Award className="w-3 h-3" />}
                           {badge}
                         </span>
                       ))}
                     </div>
-                    <span className="text-xs sm:text-sm font-medium text-primary uppercase tracking-[0.25em]">
+                    <span className="text-[10px] sm:text-xs font-medium text-primary-foreground/90 uppercase tracking-[0.25em]">
                       {slide.subtitle}
                     </span>
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mt-2 mb-4 leading-tight text-background">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-bold mt-2 mb-3 leading-tight text-white">
                       {slide.title}
                     </h1>
-                    <p className="text-sm sm:text-base md:text-lg text-background/80 mb-6 sm:mb-8 max-w-md leading-relaxed">
+                    <p className="text-sm sm:text-base text-gray-100 mb-6 max-w-md leading-relaxed hidden sm:block">
                       {slide.description}
+                    </p>
+                    <p className="text-sm text-gray-100 mb-6 max-w-md leading-relaxed sm:hidden">
+                      {slide.description.substring(0, 100)}...
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Button
-                        size="lg"
                         asChild
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground group btn-glow"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground group btn-glow px-6"
                       >
                         <Link href={slide.link}>
                           {slide.cta}
@@ -130,10 +132,9 @@ export default function HeroCarousel() {
                         </Link>
                       </Button>
                       <Button
-                        size="lg"
                         variant="outline"
                         asChild
-                        className="border-background/30 text-background hover:bg-background/10 hover:text-background bg-transparent"
+                        className="border-white/30 text-white hover:bg-white/10 hover:text-white bg-transparent px-6"
                       >
                         <Link href="/browse-by-intention">Browse by Intention</Link>
                       </Button>

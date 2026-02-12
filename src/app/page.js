@@ -147,9 +147,9 @@ export default function HomePage() {
   return (
     <main className="overflow-hidden">
       <HeroCarousel />
+      <PopularProductsSection />
       <LearningJourneySection />
       <CategoriesSection />
-      <PopularProductsSection />
       <NewArrivalsSection />
       <RecentlyViewedSection />
       <GuidanceSection />
