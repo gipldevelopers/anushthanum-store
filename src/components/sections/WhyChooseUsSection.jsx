@@ -64,7 +64,7 @@ export default function WhyChooseUsSection() {
             transition={{ delay: 0.1 }}
             className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold mt-2 mb-3 text-background"
           >
-            Why Rudraksha from Anushtanum?
+            Why Buy Products from Anushthanum?
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 16 }}

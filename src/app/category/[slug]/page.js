@@ -159,11 +159,10 @@ export default function CategoryPage() {
               key={range.label}
               type="button"
               onClick={() => setPriceRange([range.min, range.max])}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                priceRange[0] === range.min && priceRange[1] === range.max
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${priceRange[0] === range.min && priceRange[1] === range.max
                   ? 'bg-primary/10 text-primary font-medium'
                   : 'hover:bg-muted'
-              }`}
+                }`}
             >
               {range.label}
             </button>
@@ -356,9 +355,7 @@ export default function CategoryPage() {
                   </span>{' '}
                   products
                 </p>
-              </div>
 
-              <div className="flex items-center gap-2">
                 {activeFilterCount > 0 && (
                   <Badge variant="secondary" className="gap-1 hidden md:inline-flex">
                     {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
@@ -372,16 +369,18 @@ export default function CategoryPage() {
                     </button>
                   </Badge>
                 )}
+              </div>
+
+              <div className="flex items-center gap-2">
 
                 <div className="hidden sm:flex border rounded-lg overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 ${
-                      viewMode === 'grid'
+                    className={`p-2 ${viewMode === 'grid'
                         ? 'bg-primary text-primary-foreground'
                         : 'hover:bg-muted'
-                    }`}
+                      }`}
                     aria-label="Grid view"
                   >
                     <Grid3X3 className="w-4 h-4" />
@@ -389,11 +388,10 @@ export default function CategoryPage() {
                   <button
                     type="button"
                     onClick={() => setViewMode('list')}
-                    className={`p-2 ${
-                      viewMode === 'list'
+                    className={`p-2 ${viewMode === 'list'
                         ? 'bg-primary text-primary-foreground'
                         : 'hover:bg-muted'
-                    }`}
+                      }`}
                     aria-label="List view"
                   >
                     <LayoutList className="w-4 h-4" />
