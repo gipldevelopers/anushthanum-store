@@ -1,11 +1,9 @@
 import { Inter, Cormorant_Garamond, Outfit } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import Providers from '@/components/providers/Providers';
 import { Toaster } from 'sonner';
-import ScrollNavigation from '@/components/layout/ScrollNavigation';
 import CartSidebar from '@/components/layout/CartSidebar';
+import LayoutShell from '@/components/layout/LayoutShell';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const cormorant = Cormorant_Garamond({
@@ -33,14 +31,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${inter.variable} ${cormorant.variable} ${outfit.variable} font-sans antialiased`}>
         <Providers>
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-            <ScrollNavigation />
-          </div>
+          <LayoutShell>{children}</LayoutShell>
           <CartSidebar />
           <Toaster position="bottom-center" richColors />
         </Providers>

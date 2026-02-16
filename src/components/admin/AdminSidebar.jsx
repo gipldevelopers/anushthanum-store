@@ -28,9 +28,9 @@ const navItems = [
   { label: 'Categories', href: '/admin/categories', icon: FolderTree },
   { label: 'Sub-Categories', href: '/admin/subcategories', icon: Layers },
   { label: 'Products', href: '/admin/products', icon: Package },
-  // { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
-  // { label: 'Media Manager', href: '/admin/media', icon: Image },
-  // { label: 'Content CMS', href: '/admin/content', icon: FileText },
+  { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { label: 'Media Manager', href: '/admin/media', icon: Image },
+  { label: 'Content CMS', href: '/admin/content', icon: FileText },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
