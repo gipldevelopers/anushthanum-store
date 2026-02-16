@@ -35,7 +35,7 @@ const mockSubCategories = [
 const emptyForm = {
   name: '', slug: '', categoryId: '', subCategoryId: '', price: '', discountPrice: '', stock: '', sku: '',
   shortDescription: '', fullDescription: '', thumbnail: '', images: [], tags: [],
-  isFeatured: false, isVisible: true, seoTitle: '', seoDescription: '', status: 'active',
+  isFeatured: false, isVisible: true, status: 'active',
 };
 
 export default function ProductForm({ isEdit, initialData }) {
@@ -122,7 +122,6 @@ export default function ProductForm({ isEdit, initialData }) {
               <TabsTrigger value="basic">Basic</TabsTrigger>
               <TabsTrigger value="media">Media</TabsTrigger>
               <TabsTrigger value="pricing">Pricing</TabsTrigger>
-              <TabsTrigger value="seo">SEO</TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4 mt-4">
@@ -249,26 +248,7 @@ export default function ProductForm({ isEdit, initialData }) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="seo" className="space-y-4 mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>SEO Settings</CardTitle>
-                  <CardDescription>Optimize for search engines</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="seoTitle">Meta Title</Label>
-                    <Input id="seoTitle" value={formData.seoTitle} onChange={(e) => setFormData((prev) => ({ ...prev, seoTitle: e.target.value }))} placeholder="SEO title (50-60 characters)" maxLength={60} />
-                    <p className="text-xs text-muted-foreground text-right">{formData.seoTitle.length}/60</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="seoDescription">Meta Description</Label>
-                    <Textarea id="seoDescription" value={formData.seoDescription} onChange={(e) => setFormData((prev) => ({ ...prev, seoDescription: e.target.value }))} placeholder="SEO description (150-160 characters)" maxLength={160} rows={3} />
-                    <p className="text-xs text-muted-foreground text-right">{formData.seoDescription.length}/160</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+
           </Tabs>
         </div>
 

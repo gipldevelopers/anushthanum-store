@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ProductCard from '@/components/ui/ProductCard';
 import HeroCarousel from '@/components/sections/HeroCarousel';
+import QuickAccessSection from '@/components/sections/QuickAccessSection';
 import LearningJourneySection from '@/components/sections/LearningJourneySection';
 import CategoriesSection from '@/components/sections/CategoriesSection';
 import PopularProductsSection from '@/components/sections/PopularProductsSection';
@@ -147,6 +148,7 @@ export default function HomePage() {
   return (
     <main className="overflow-hidden">
       <HeroCarousel />
+      <QuickAccessSection />
       <PopularProductsSection />
       <LearningJourneySection />
       <CategoriesSection />

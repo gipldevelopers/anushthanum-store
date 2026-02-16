@@ -28,8 +28,10 @@ import {
     SelectContent,
     SelectItem,
     SelectTrigger,
+
     SelectValue,
 } from '@/components/ui/select';
+import CategoryFilter from '@/components/sections/CategoryFilter';
 import ProductCard from '@/components/ui/ProductCard';
 import {
     categories,
@@ -42,16 +44,115 @@ const sortOptions = [
     { value: 'newest', label: 'Newest First' },
     { value: 'price-low', label: 'Price: Low to High' },
     { value: 'price-high', label: 'Price: High to Low' },
-    { value: 'rating', label: 'Highest Rated' },
 ];
 
-const priceRanges = [
-    { min: 0, max: 2000, label: 'Under ₹2,000' },
-    { min: 2000, max: 5000, label: '₹2,000 - ₹5,000' },
-    { min: 5000, max: 20000, label: '₹5,000 - ₹20,000' },
-    { min: 20000, max: 50000, label: '₹20,000 - ₹50,000' },
-    { min: 50000, max: 500000, label: 'Above ₹50,000' },
+const purposeKeywords = {
+    Health: ['health', 'digestive', 'blood pressure', 'healing', 'wellbeing'],
+    Wealth: ['wealth', 'prosperity', 'abundance', 'money', 'success', 'sri yantra', 'lakshmi', 'financial'],
+    Peace: ['peace', 'calm', 'meditation', 'stress', 'soothing', 'mental peace'],
+    Love: ['love', 'relationship', 'marriage', 'attraction', 'harmony', 'unity'],
+    Protection: ['protection', 'negative energy', 'evil eye', 'shield', 'safety'],
+    Balance: ['balance', 'chakra', 'emotional stability', 'grounding', 'unity'],
+    Courage: ['courage', 'confidence', 'willpower', 'strength', 'fearless', 'power'],
+};
+
+const getProductPurposes = (product) => {
+    const text = `${product.name} ${product.description} ${product.benefits ? product.benefits.join(' ') : ''}`.toLowerCase();
+    const purposes = [];
+    for (const [purpose, keywords] of Object.entries(purposeKeywords)) {
+        if (keywords.some(k => text.includes(k))) {
+            purposes.push(purpose);
+        }
+    }
+    return purposes;
+};
+
+const initialPurposes = [
+    { id: 'Health', label: 'Health' },
+    { id: 'Wealth', label: 'Wealth' },
+    { id: 'Peace', label: 'Peace' },
+    { id: 'Love', label: 'Love' },
+    { id: 'Protection', label: 'Protection' },
+    { id: 'Balance', label: 'Balance' },
+    { id: 'Courage', label: 'Courage' },
 ];
+
+
+
+const beadKeywords = {
+    Rudraksha: ['rudraksha'],
+    Karungali: ['karungali', 'ebony'],
+    Pyrite: ['pyrite'],
+    Sphatik: ['sphatik', 'crystal', 'quartz', 'clear quartz'],
+    'Rose Quartz': ['rose quartz'],
+    'Tiger Eye': ['tiger eye'],
+    Lava: ['lava'],
+    Amethyst: ['amethyst'],
+    Sandalwood: ['sandalwood', 'chandan'],
+    Tulsi: ['tulsi']
+};
+
+const getProductBeads = (product) => {
+    const text = `${product.name} ${product.description} ${product.slug}`.toLowerCase();
+    const beads = [];
+    for (const [bead, keywords] of Object.entries(beadKeywords)) {
+        if (keywords.some(k => text.includes(k))) {
+            beads.push(bead);
+        }
+    }
+    return beads;
+};
+
+const mukhiKeywords = {
+    '1 - Ek': ['1 mukhi', '1-mukhi', 'ek mukhi'],
+    '2 - Do': ['2 mukhi', '2-mukhi', 'do mukhi'],
+    '3 - Teen': ['3 mukhi', '3-mukhi', 'teen mukhi'],
+    '4 - Chaar': ['4 mukhi', '4-mukhi', 'chaar mukhi'],
+    '5 - Paanch': ['5 mukhi', '5-mukhi', 'paanch mukhi', 'panchmukhi'],
+    '6 - Chhey': ['6 mukhi', '6-mukhi', 'chhey mukhi'],
+    '7 - Saat': ['7 mukhi', '7-mukhi', 'saat mukhi'],
+    '8 - Aath': ['8 mukhi', '8-mukhi', 'aath mukhi'],
+    '9 - Nau': ['9 mukhi', '9-mukhi', 'nau mukhi'],
+    '10 - Das': ['10 mukhi', '10-mukhi', 'das mukhi'],
+    '11 - Gyaarah': ['11 mukhi', '11-mukhi', 'gyaarah mukhi'],
+    '12 - Baarah': ['12 mukhi', '12-mukhi', 'baarah mukhi'],
+    '13 - Terah': ['13 mukhi', '13-mukhi', 'terah mukhi'],
+    '14 - Chaudah': ['14 mukhi', '14-mukhi', 'chaudah mukhi'],
+    'Ganesh': ['ganesh rudraksha'],
+    'Gauri Shankar': ['gauri shankar'],
+};
+
+const getProductMukhis = (product) => {
+    const text = `${product.name} ${product.description} ${product.slug} ${product.subCategorySlug || ''}`.toLowerCase();
+    const mukhis = [];
+    for (const [mukhi, keywords] of Object.entries(mukhiKeywords)) {
+        if (keywords.some(k => text.includes(k))) {
+            mukhis.push(mukhi);
+        }
+    }
+    return mukhis;
+};
+
+const platingKeywords = {
+    Silver: ['silver', 'sterling silver'],
+    Gold: ['gold', 'gold plated'],
+    DuoTone: ['duotone', 'two tone', 'dual tone', 'gold and silver'],
+};
+
+const getProductPlatings = (product) => {
+    const text = `${product.name} ${product.description} ${product.slug}`.toLowerCase();
+    const platings = [];
+    for (const [plating, keywords] of Object.entries(platingKeywords)) {
+        if (keywords.some(k => text.includes(k))) {
+            platings.push(plating);
+        }
+    }
+    return platings;
+};
+
+const initialBeads = Object.keys(beadKeywords).map(b => ({ id: b, label: b }));
+const initialMukhis = Object.keys(mukhiKeywords).map(m => ({ id: m, label: m }));
+const initialPlatings = Object.keys(platingKeywords).map(p => ({ id: p, label: p }));
 
 export default function CategoryPage() {
     const params = useParams();
@@ -65,8 +166,10 @@ export default function CategoryPage() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const [priceRange, setPriceRange] = useState([0, 500000]);
-    const [selectedAvailability, setSelectedAvailability] = useState([]);
-    const [selectedRatings, setSelectedRatings] = useState([]);
+    const [selectedPurposes, setSelectedPurposes] = useState([]);
+    const [selectedBeads, setSelectedBeads] = useState([]);
+    const [selectedMukhis, setSelectedMukhis] = useState([]);
+    const [selectedPlatings, setSelectedPlatings] = useState([]);
     const [sortBy, setSortBy] = useState('popular');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 12;
@@ -109,20 +212,32 @@ export default function CategoryPage() {
             (p) => p.price >= priceRange[0] && p.price <= priceRange[1]
         );
 
-        if (selectedAvailability.length > 0) {
+        if (selectedPurposes.length > 0) {
             result = result.filter((p) => {
-                if (selectedAvailability.includes('in-stock') && p.inStock)
-                    return true;
-                if (selectedAvailability.includes('out-of-stock') && !p.inStock)
-                    return true;
-                return false;
+                const productPurposes = getProductPurposes(p);
+                return selectedPurposes.some(purpose => productPurposes.includes(purpose));
             });
         }
 
-        if (selectedRatings.length > 0) {
-            result = result.filter((p) =>
-                selectedRatings.some((r) => p.rating >= r)
-            );
+        if (selectedBeads.length > 0) {
+            result = result.filter((p) => {
+                const productBeads = getProductBeads(p);
+                return selectedBeads.some(bead => productBeads.includes(bead));
+            });
+        }
+
+        if (selectedMukhis.length > 0) {
+            result = result.filter((p) => {
+                const productMukhis = getProductMukhis(p);
+                return selectedMukhis.some(mukhi => productMukhis.includes(mukhi));
+            });
+        }
+
+        if (selectedPlatings.length > 0) {
+            result = result.filter((p) => {
+                const productPlatings = getProductPlatings(p);
+                return selectedPlatings.some(plating => productPlatings.includes(plating));
+            });
         }
 
         switch (sortBy) {
@@ -137,9 +252,6 @@ export default function CategoryPage() {
             case 'price-high':
                 result.sort((a, b) => b.price - a.price);
                 break;
-            case 'rating':
-                result.sort((a, b) => b.rating - a.rating);
-                break;
             case 'popular':
             default:
                 result = result
@@ -149,7 +261,63 @@ export default function CategoryPage() {
         }
 
         return result;
-    }, [baseProducts, priceRange, selectedAvailability, selectedRatings, sortBy]);
+    }, [baseProducts, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy]);
+
+    const availablePurposes = useMemo(() => {
+        const counts = {};
+        initialPurposes.forEach(p => counts[p.id] = 0);
+        baseProducts.forEach(p => {
+             const pPurposes = getProductPurposes(p);
+             pPurposes.forEach(purpose => {
+                 if (counts[purpose] !== undefined) {
+                     counts[purpose]++;
+                 }
+             });
+        });
+        return initialPurposes.map(p => ({ ...p, count: counts[p.id] || 0 }));
+    }, [baseProducts]);
+
+    const availableBeads = useMemo(() => {
+        const counts = {};
+        initialBeads.forEach(b => counts[b.id] = 0);
+        baseProducts.forEach(p => {
+             const pBeads = getProductBeads(p);
+             pBeads.forEach(bead => {
+                 if (counts[bead] !== undefined) {
+                     counts[bead]++;
+                 }
+             });
+        });
+        return initialBeads.map(b => ({ ...b, count: counts[b.id] || 0 })).filter(b => b.count > 0);
+    }, [baseProducts]);
+
+    const availableMukhis = useMemo(() => {
+        const counts = {};
+        initialMukhis.forEach(m => counts[m.id] = 0);
+        baseProducts.forEach(p => {
+             const pMukhis = getProductMukhis(p);
+             pMukhis.forEach(mukhi => {
+                 if (counts[mukhi] !== undefined) {
+                     counts[mukhi]++;
+                 }
+             });
+        });
+        return initialMukhis.map(m => ({ ...m, count: counts[m.id] || 0 })).filter(m => m.count > 0);
+    }, [baseProducts]);
+
+    const availablePlatings = useMemo(() => {
+        const counts = {};
+        initialPlatings.forEach(p => counts[p.id] = 0);
+        baseProducts.forEach(p => {
+             const pPlatings = getProductPlatings(p);
+             pPlatings.forEach(plating => {
+                 if (counts[plating] !== undefined) {
+                     counts[plating]++;
+                 }
+             });
+        });
+        return initialPlatings.map(p => ({ ...p, count: counts[p.id] || 0 }));
+    }, [baseProducts]);
 
     // Pagination Logic
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -165,22 +333,27 @@ export default function CategoryPage() {
     };
 
     // Reset pagination when filters change
+    // Reset pagination when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [categorySlug, subCategorySlug, priceRange, selectedAvailability, selectedRatings, sortBy]);
+    }, [categorySlug, subCategorySlug, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy]);
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
         if (priceRange[0] > 0 || priceRange[1] < 500000) count++;
-        if (selectedAvailability.length > 0) count++;
-        if (selectedRatings.length > 0) count++;
+        if (selectedPurposes.length > 0) count++;
+        if (selectedBeads.length > 0) count++;
+        if (selectedMukhis.length > 0) count++;
+        if (selectedPlatings.length > 0) count++;
         return count;
-    }, [priceRange, selectedAvailability, selectedRatings]);
+    }, [priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings]);
 
     const clearFilters = () => {
         setPriceRange([0, 500000]);
-        setSelectedAvailability([]);
-        setSelectedRatings([]);
+        setSelectedPurposes([]);
+        setSelectedBeads([]);
+        setSelectedMukhis([]);
+        setSelectedPlatings([]);
         setIsFilterOpen(false);
     };
 
@@ -198,105 +371,7 @@ export default function CategoryPage() {
         }).format(price);
     };
 
-    const FilterPanel = () => (
-        <div className="space-y-6">
-            <div>
-                <h4 className="font-medium mb-4">Price Range</h4>
-                <div className="space-y-2">
-                    {priceRanges.map((range) => (
-                        <button
-                            key={range.label}
-                            type="button"
-                            onClick={() => setPriceRange([range.min, range.max])}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${priceRange[0] === range.min && priceRange[1] === range.max
-                                ? 'bg-primary/10 text-primary font-medium'
-                                : 'hover:bg-muted'
-                                }`}
-                        >
-                            {range.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
 
-            <div>
-                <h4 className="font-medium mb-4">Availability</h4>
-                <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                            checked={selectedAvailability.includes('in-stock')}
-                            onCheckedChange={(checked) => {
-                                if (checked) {
-                                    setSelectedAvailability([
-                                        ...selectedAvailability,
-                                        'in-stock',
-                                    ]);
-                                } else {
-                                    setSelectedAvailability(
-                                        selectedAvailability.filter((a) => a !== 'in-stock')
-                                    );
-                                }
-                            }}
-                        />
-                        <span className="text-sm">In Stock</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                            checked={selectedAvailability.includes('out-of-stock')}
-                            onCheckedChange={(checked) => {
-                                if (checked) {
-                                    setSelectedAvailability([
-                                        ...selectedAvailability,
-                                        'out-of-stock',
-                                    ]);
-                                } else {
-                                    setSelectedAvailability(
-                                        selectedAvailability.filter((a) => a !== 'out-of-stock')
-                                    );
-                                }
-                            }}
-                        />
-                        <span className="text-sm">Out of Stock</span>
-                    </label>
-                </div>
-            </div>
-
-            <div>
-                <h4 className="font-medium mb-4">Customer Rating</h4>
-                <div className="space-y-3">
-                    {[4, 3, 2].map((rating) => (
-                        <label
-                            key={rating}
-                            className="flex items-center gap-3 cursor-pointer"
-                        >
-                            <Checkbox
-                                checked={selectedRatings.includes(rating)}
-                                onCheckedChange={(checked) => {
-                                    if (checked) {
-                                        setSelectedRatings([...selectedRatings, rating]);
-                                    } else {
-                                        setSelectedRatings(
-                                            selectedRatings.filter((r) => r !== rating)
-                                        );
-                                    }
-                                }}
-                            />
-                            <span className="text-sm flex items-center gap-1">
-                                {rating}+ Stars
-                                <span className="text-secondary">{'★'.repeat(rating)}</span>
-                            </span>
-                        </label>
-                    ))}
-                </div>
-            </div>
-
-            {activeFilterCount > 0 && (
-                <Button variant="outline" onClick={clearFilters} className="w-full">
-                    Clear All Filters
-                </Button>
-            )}
-        </div>
-    );
 
     if (!category && !categorySlug) {
         return (
@@ -364,7 +439,21 @@ export default function CategoryPage() {
                                     </Badge>
                                 )}
                             </div>
-                            <FilterPanel />
+                            <CategoryFilter
+                                priceRange={priceRange}
+                                setPriceRange={setPriceRange}
+                                selectedPurposes={selectedPurposes}
+                                setSelectedPurposes={setSelectedPurposes}
+                                availablePurposes={availablePurposes}
+                                selectedBeads={selectedBeads}
+                                setSelectedBeads={setSelectedBeads}
+                                availableBeads={availableBeads}
+                                selectedMukhis={selectedMukhis}
+                                setSelectedMukhis={setSelectedMukhis}
+                                availableMukhis={availableMukhis}
+                                clearFilters={clearFilters}
+                                activeFilterCount={activeFilterCount}
+                            />
                         </div>
                     </aside>
 
@@ -394,8 +483,25 @@ export default function CategoryPage() {
                                         <DialogHeader>
                                             <DialogTitle>Filters</DialogTitle>
                                         </DialogHeader>
-                                        <div className="mt-4">
-                                            <FilterPanel />
+                                            <div className="mt-4">
+                                            <CategoryFilter
+                                                priceRange={priceRange}
+                                                setPriceRange={setPriceRange}
+                                                selectedPurposes={selectedPurposes}
+                                                setSelectedPurposes={setSelectedPurposes}
+                                                availablePurposes={availablePurposes}
+                                                selectedBeads={selectedBeads}
+                                                setSelectedBeads={setSelectedBeads}
+                                                availableBeads={availableBeads}
+                                                selectedMukhis={selectedMukhis}
+                                                setSelectedMukhis={setSelectedMukhis}
+                                                availableMukhis={availableMukhis}
+                                                selectedPlatings={selectedPlatings}
+                                                setSelectedPlatings={setSelectedPlatings}
+                                                availablePlatings={availablePlatings}
+                                                clearFilters={clearFilters}
+                                                activeFilterCount={activeFilterCount}
+                                            />
                                         </div>
                                         <Button
                                             className="w-full mt-4"
@@ -412,6 +518,20 @@ export default function CategoryPage() {
                                     </span>{' '}
                                     products
                                 </p>
+
+                                <Select value={sortBy} onValueChange={setSortBy}>
+                                    <SelectTrigger className="w-full sm:w-[180px] min-w-0">
+                                        <SlidersHorizontal className="w-4 h-4 mr-2 shrink-0" />
+                                        <SelectValue placeholder="Sort by" />
+                                    </SelectTrigger>
+                                    <SelectContent align="start">
+                                        {sortOptions.map((option) => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -429,7 +549,7 @@ export default function CategoryPage() {
                                     </Badge>
                                 )}
 
-                                <div className="hidden sm:flex border rounded-lg overflow-hidden">
+                                {/* <div className="hidden sm:flex border rounded-lg overflow-hidden">
                                     <button
                                         type="button"
                                         onClick={() => setViewMode('grid')}
@@ -452,21 +572,9 @@ export default function CategoryPage() {
                                     >
                                         <LayoutList className="w-4 h-4" />
                                     </button>
-                                </div>
+                                </div> */}
 
-                                <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="w-full sm:w-[180px] min-w-0">
-                                        <SlidersHorizontal className="w-4 h-4 mr-2 shrink-0" />
-                                        <SelectValue placeholder="Sort by" />
-                                    </SelectTrigger>
-                                    <SelectContent align="end">
-                                        {sortOptions.map((option) => (
-                                            <SelectItem key={option.value} value={option.value}>
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+
                             </div>
                         </div>
 

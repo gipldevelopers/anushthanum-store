@@ -101,6 +101,23 @@ const navItems = [
     ],
   },
   {
+    label: 'Jewellery',
+    href: '/category/jewellery',
+    dropdown: [
+      { label: 'Rings', href: '/category/jewellery?type=rings' },
+      { label: 'Earrings', href: '/category/jewellery?type=earrings' },
+      { label: 'Necklaces', href: '/category/jewellery?type=necklaces' },
+    ],
+  },
+  {
+    label: 'Candles',
+    href: '/category/candles',
+    dropdown: [
+      { label: 'Scented Candles', href: '/category/candles?type=scented' },
+      { label: 'Ritual Candles', href: '/category/candles?type=ritual' },
+    ],
+  },
+  {
     label: 'Shop by Intention',
     href: '/browse-by-intention',
   },

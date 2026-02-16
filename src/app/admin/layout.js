@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { AdminAuthProvider, useAdminAuth } from '@/context/AdminAuthContext';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import AdminHeader from '@/components/admin/AdminHeader';
 import { cn } from '@/lib/utils';
 
 function AdminLayoutInner({ children }) {
@@ -41,15 +42,17 @@ function AdminLayoutInner({ children }) {
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
-      <main
+      <div
         className={cn(
-          'min-h-screen transition-all duration-200 pt-4 pb-8 px-4 md:px-6 lg:px-8',
+          'transition-all duration-200',
           sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
         )}
       >
-        <div className="md:hidden h-12" />
-        {children}
-      </main>
+        <AdminHeader />
+        <main className="p-4 md:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

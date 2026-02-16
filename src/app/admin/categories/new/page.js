@@ -24,8 +24,6 @@ export default function NewCategoryPage() {
     description: '',
     image: '',
     status: true,
-    seoTitle: '',
-    seoDescription: '',
   });
 
   const handleNameChange = (name) => {
@@ -127,24 +125,7 @@ export default function NewCategoryPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>SEO Settings</CardTitle>
-            <CardDescription>Optimize for search engines</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="seoTitle">Meta Title</Label>
-              <Input id="seoTitle" value={formData.seoTitle} onChange={(e) => setFormData((prev) => ({ ...prev, seoTitle: e.target.value }))} maxLength={60} />
-              <p className="text-xs text-muted-foreground text-right">{formData.seoTitle.length}/60</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="seoDescription">Meta Description</Label>
-              <Textarea id="seoDescription" value={formData.seoDescription} onChange={(e) => setFormData((prev) => ({ ...prev, seoDescription: e.target.value }))} maxLength={160} rows={2} />
-              <p className="text-xs text-muted-foreground text-right">{formData.seoDescription.length}/160</p>
-            </div>
-          </CardContent>
-        </Card>
+
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

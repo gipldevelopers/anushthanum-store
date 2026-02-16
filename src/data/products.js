@@ -754,6 +754,8 @@ export const categories = [
   { id: '3', name: 'Bracelets', slug: 'bracelets', description: 'Spiritual wearables for daily protection', productCount: 36 },
   { id: '4', name: 'Crystals', slug: 'crystals', description: 'Healing stones for energy balance', productCount: 52 },
   { id: '5', name: 'Malas', slug: 'malas', description: 'Sacred prayer beads for meditation and chanting', productCount: 27 },
+  { id: '6', name: 'Jewellery', slug: 'jewellery', description: 'Sacred and spiritual jewellery', productCount: 0 },
+  { id: '7', name: 'Candles', slug: 'candles', description: 'Aromatic and spiritual candles', productCount: 0 },
 ];
 
 export const getProductById = (id) => products.find((p) => p.id === id);
