@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Phone, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, Phone, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,8 +16,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+
+const OTP_LENGTH = 6;
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 function GoogleIcon({ className }) {
   return (
@@ -41,6 +53,14 @@ export default function SignUpPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  // OTP step after signup form submit
+  const [showOtpDialog, setShowOtpDialog] = useState(false);
+  const [pendingSignup, setPendingSignup] = useState(null);
+  const [sentOtp, setSentOtp] = useState('');
+  const [otpInput, setOtpInput] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   if (isAuthenticated) {
     router.replace('/profile');
     return (
@@ -50,6 +70,17 @@ export default function SignUpPage() {
     );
   }
 
+  const sendOtp = useCallback((toEmail) => {
+    const otp = generateOtp();
+    setSentOtp(otp);
+    setResendCooldown(60);
+    const t = setInterval(() => {
+      setResendCooldown((c) => (c <= 1 ? (clearInterval(t), 0) : c - 1));
+    }, 1000);
+    toast.success(`OTP sent to ${toEmail}`, { description: 'Check your inbox (dev: use any 6 digits for now)' });
+    return otp;
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -57,15 +88,55 @@ export default function SignUpPage() {
       return;
     }
     setIsSubmitting(true);
-    const result = signUp(name, email, phone, password);
+    setPendingSignup({ name, email, phone, password });
+    const otp = generateOtp();
+    setSentOtp(otp);
+    setOtpInput('');
+    setResendCooldown(60);
+    setShowOtpDialog(true);
     setIsSubmitting(false);
+    toast.success('OTP sent to your email', { description: `Enter the 6-digit code below. (Dev: ${otp})` });
+  };
+
+  const handleVerifyOtp = () => {
+    if (otpInput.length !== OTP_LENGTH) {
+      toast.error('Please enter the 6-digit OTP');
+      return;
+    }
+    setIsVerifying(true);
+    if (otpInput !== sentOtp) {
+      toast.error('Invalid OTP. Please try again.');
+      setIsVerifying(false);
+      return;
+    }
+    const result = signUp(pendingSignup.name, pendingSignup.email, pendingSignup.phone, pendingSignup.password);
+    setIsVerifying(false);
     if (result.success) {
+      setShowOtpDialog(false);
+      setPendingSignup(null);
+      setSentOtp('');
+      setOtpInput('');
       toast.success('Account created! Welcome to Anushthanum.');
       router.push('/profile');
     } else {
       toast.error(result.error || 'Sign up failed.');
     }
   };
+
+  const handleResendOtp = () => {
+    if (resendCooldown > 0) return;
+    const otp = sendOtp(pendingSignup?.email || email);
+    setSentOtp(otp);
+    setOtpInput('');
+    setResendCooldown(60);
+    toast.success('New OTP sent');
+  };
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown((c) => (c <= 1 ? 0 : c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
 
   const handleGoogleSignIn = () => {
     setIsGoogleLoading(true);
@@ -249,6 +320,63 @@ export default function SignUpPage() {
             </CardFooter>
           </form>
         </Card>
+
+        <Dialog open={showOtpDialog} onOpenChange={(open) => !open && setShowOtpDialog(false)}>
+          <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogHeader>
+              <div className="flex justify-center mb-2">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6 text-primary" />
+                </div>
+              </div>
+              <DialogTitle className="text-center">Verify your email</DialogTitle>
+              <DialogDescription className="text-center">
+                We&apos;ve sent a 6-digit code to <span className="font-medium text-foreground">{pendingSignup?.email}</span>. Enter it below.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="otp-input">Enter OTP</Label>
+                <Input
+                  id="otp-input"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={OTP_LENGTH}
+                  placeholder="000000"
+                  value={otpInput}
+                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, OTP_LENGTH))}
+                  className="h-12 text-center text-xl tracking-[0.5em] font-mono"
+                  autoFocus
+                />
+              </div>
+              <Button
+                type="button"
+                className="w-full h-11"
+                onClick={handleVerifyOtp}
+                disabled={isVerifying || otpInput.length !== OTP_LENGTH}
+              >
+                {isVerifying ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                    Verifying...
+                  </span>
+                ) : (
+                  'Verify & create account'
+                )}
+              </Button>
+              <p className="text-center text-sm text-muted-foreground">
+                Didn&apos;t receive the code?{' '}
+                {resendCooldown > 0 ? (
+                  <span>Resend in {resendCooldown}s</span>
+                ) : (
+                  <button type="button" className="font-medium text-primary hover:underline" onClick={handleResendOtp}>
+                    Resend OTP
+                  </button>
+                )}
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
           By signing up, you agree to our{' '}
