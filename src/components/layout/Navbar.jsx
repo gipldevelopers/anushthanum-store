@@ -19,12 +19,22 @@ import {
   Home,
   Info,
   LogIn,
+  LogOut,
   UserCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useAuth } from '@/context/AuthContext';
 import { products } from '@/data/products';
 
 const navItems = [
@@ -150,6 +160,7 @@ export default function Navbar() {
   const searchInputRef = useRef(null);
   const { totalItems, setIsCartOpen } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
+  const { user, isAuthenticated, signOut } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -250,7 +261,7 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Right: Search & Cart (2 columns) */}
+            {/* Right: Search, Cart, Account (2 columns) */}
             <div className="col-span-2 flex items-center justify-end gap-1">
               <Button
                 variant="ghost"
@@ -275,6 +286,58 @@ export default function Navbar() {
                   </span>
                 )}
               </Button>
+              {isAuthenticated && user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full h-11 w-11 min-w-0 p-0 text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      aria-label="Account menu"
+                    >
+                      <Avatar className="h-9 w-9 ring-1 ring-border">
+                        <AvatarImage src={user.avatar} alt={user.name || user.email} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                          {(user.name || user.email || 'U').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer" onClick={() => setIsMenuOpen(false)}>
+                        <User className="w-4 h-4" />
+                        Account
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer" onClick={() => setIsMenuOpen(false)}>
+                        <Package className="w-4 h-4" />
+                        Orders
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                      onClick={() => { signOut(); setIsMenuOpen(false); }}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/signin" className="flex">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-foreground/70 hover:text-foreground hover:bg-muted/50 h-11 w-11 min-w-0 p-0"
+                    aria-label="Sign in"
+                  >
+                    <User className="w-5 h-5" />
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -408,16 +471,58 @@ export default function Navbar() {
                   </span>
                 )}
               </Button>
-              <Link href="/profile" className="touch-target flex">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-foreground/70 hover:text-foreground hover:bg-muted/50 h-11 w-11 sm:h-10 sm:w-10 min-w-0"
-                  aria-label="Account"
-                >
-                  <User className="w-5 h-5" />
-                </Button>
-              </Link>
+              {isAuthenticated && user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full h-11 w-11 sm:h-10 sm:w-10 p-0 text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      aria-label="Account menu"
+                    >
+                      <Avatar className="h-9 w-9 sm:h-8 sm:w-8 ring-1 ring-border">
+                        <AvatarImage src={user.avatar} alt={user.name || user.email} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                          {(user.name || user.email || 'U').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                        <User className="w-4 h-4" />
+                        Account
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer">
+                        <Package className="w-4 h-4" />
+                        Orders
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                      onClick={() => signOut()}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/signin" className="touch-target flex">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-foreground/70 hover:text-foreground hover:bg-muted/50 h-11 w-11 sm:h-10 sm:w-10 min-w-0"
+                    aria-label="Sign in"
+                  >
+                    <User className="w-5 h-5" />
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -587,33 +692,81 @@ export default function Navbar() {
                 {/* User Profile Section (Header) */}
                 <div className="mb-6 pb-4 border-b border-border">
                   <div className="flex items-center gap-3 p-2">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                      <UserCircle className="w-7 h-7 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-base truncate">Welcome Guest</p>
-                      <p className="text-sm text-muted-foreground">Sign in for better experience</p>
-                    </div>
+                    {isAuthenticated && user ? (
+                      <>
+                        <Avatar className="w-12 h-12 ring-2 ring-border">
+                          <AvatarImage src={user.avatar} alt={user.name || user.email} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                            {(user.name || user.email || 'U').charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-base truncate">{user.name || user.email}</p>
+                          <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                          <UserCircle className="w-7 h-7 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-base truncate">Welcome Guest</p>
+                          <p className="text-sm text-muted-foreground">Sign in for better experience</p>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Profile Actions */}
                   <div className="mt-4 grid grid-cols-2 gap-2">
-                    <Link
-                      href="/signin"
-                      className="flex items-center justify-center gap-2 py-2.5 px-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <LogIn className="w-4 h-4" />
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/profile"
-                      className="flex items-center justify-center gap-2 py-2.5 px-3 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors text-sm font-medium"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <User className="w-4 h-4" />
-                      My Profile
-                    </Link>
+                    {isAuthenticated && user ? (
+                      <>
+                        <Link
+                          href="/profile"
+                          className="flex items-center justify-center gap-2 py-2.5 px-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <User className="w-4 h-4" />
+                          Account
+                        </Link>
+                        <Link
+                          href="/orders"
+                          className="flex items-center justify-center gap-2 py-2.5 px-3 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors text-sm font-medium"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <Package className="w-4 h-4" />
+                          Orders
+                        </Link>
+                        <button
+                          type="button"
+                          className="col-span-2 flex items-center justify-center gap-2 py-2.5 px-3 border border-destructive/50 text-destructive rounded-lg hover:bg-destructive/10 transition-colors text-sm font-medium"
+                          onClick={() => { signOut(); setIsMenuOpen(false); }}
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign out
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href="/signin"
+                          className="flex items-center justify-center gap-2 py-2.5 px-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <LogIn className="w-4 h-4" />
+                          Sign In
+                        </Link>
+                        <Link
+                          href="/profile"
+                          className="flex items-center justify-center gap-2 py-2.5 px-3 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors text-sm font-medium"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <User className="w-4 h-4" />
+                          My Profile
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
 
