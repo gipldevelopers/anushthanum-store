@@ -1,0 +1,98 @@
+# initialize npm
+npm init -y
+
+# core dependency
+npm install express cors helmet express-rate-limit morgan compression dotenv
+npm install @prisma/client prisma bcryptjs jsonwebtoken
+npm install joi express-async-errors
+npm install multer sharp
+npm install nodemailer
+npm install ioredis
+npm install winston
+npm install uuid
+npm install axios
+
+# development dependency
+npm install -D nodemon
+
+npm install -D prisma
+
+-------------------------------------
+npx prisma init
+
+npx prisma generate
+
+npx prisma db push
+--------------------------------------------------------------------------
+Summary of what’s in place:
+1. src/lib/axios.js (shared API client)
+Base URL: NEXT_PUBLIC_API_URL or http://localhost:5000/api
+Request interceptor:
+No token for: /auth/register, /auth/send-otp, /auth/verify-otp, /auth/login, /auth/admin/login
+Admin token (admin_token) for URLs containing /auth/admin/ (e.g. /auth/admin/me)
+User token (anushthanum_auth.accessToken) for other auth (e.g. /auth/me)
+Response interceptor: On 401 (and not an auth route), clears the matching token and optionally redirects; otherwise passes errors through.
+2. src/lib/adminAxios.js (admin-only client)
+Same base URL, always sends Authorization: Bearer <admin_token>.
+Use for admin-only modules (dashboard, categories, products, orders, media, content).
+On 401, clears admin token and admin_user.
+3. src/services/auth.service.js (uses api from lib/axios.js)
+User: register, sendOtp, verifyOtp, login, getMe → api.post/get(..., body) and returns res.data.
+Admin: adminLogin, getAdminMe → same api, interceptor adds admin token for getAdminMe.
+Storage helpers: getToken, getStoredUser, setAuth, clearAuth, getAdminToken, setAdminAuth, clearAdminAuth (same keys as before).
+No change needed in how AuthContext or AdminAuthContext call the service; only error handling was updated for axios (err.response?.data?.message).
+4. src/services/adminApi.js (uses adminApi from lib/adminAxios.js)
+authApi: login, getCurrentUser (admin login is still done via auth.service.adminLogin in the app).
+dashboardApi, categoriesApi, subCategoriesApi, productsApi, ordersApi, mediaApi, contentApi: all use adminApi.get/post/put/patch/delete and a small handleResponse / handleError so callers get data or a thrown error with backend message.
+5. Contexts
+AuthContext: Error messages now use err.response?.data?.message (axios) with fallbacks.
+AdminAuthContext: Catches axios errors and rethrows with err.response?.data?.message so the login page can show the backend message.
+Usage pattern (like houspire)
+User / public auth: use authService from @/services/auth.service (it uses the shared api).
+Admin auth (login / me): use authService.adminLogin / authService.getAdminMe (or authApi in adminApi.js if you prefer).
+Other admin modules: use adminApi.js:
+import { categoriesApi, productsApi } from '@/services/adminApi';
+categoriesApi.getAll(), productsApi.getById(id), etc.
+New module: add a new service file, e.g. src/services/orders.service.js, and use import api from '@/lib/axios' for user-scoped or public calls, or import adminApi from '@/lib/adminAxios' for admin-only calls.
+
+-----------------------------------------------------
+Summary of what’s in place for Google Sign-In:
+Backend
+Prisma
+User has optional unique googleId (Google OAuth sub).
+Migration applied with npx prisma db push.
+Config
+config.GOOGLE_CLIENT_ID from GOOGLE_CLIENT_ID in .env.
+Your web client id is set in backend/.env.
+Auth
+POST /api/auth/google
+Body: { "token": "<access_token or id_token>" }.
+Verifies token (id_token via google-auth-library, or access_token via Google userinfo), finds or creates user by googleId/email, returns user + accessToken.
+Dependency
+google-auth-library added and used for verifyIdToken.
+Frontend
+Env
+NEXT_PUBLIC_GOOGLE_CLIENT_ID set in frontend/.env (same value as backend).
+Auth
+auth.service.js: googleAuth({ token }) → POST /auth/google.
+AuthContext: signInWithGoogle(token) calls that and stores user + token on success.
+Google button
+src/components/auth/GoogleSignInButton.jsx
+Loads Google GSI script, uses initTokenClient to get an access_token, calls signInWithGoogle(access_token), then redirects to redirectTo (default /profile).
+Pages
+Sign-in and sign-up use <GoogleSignInButton /> instead of the previous placeholder.
+Credentials (already done)
+Backend .env:
+GOOGLE_CLIENT_ID=711738346194-lsuesnn82j14htlqfqn6qahg7us7pr5k.apps.googleusercontent.com
+Frontend .env:
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=711738346194-lsuesnn82j14htlqfqn6qahg7us7pr5k.apps.googleusercontent.com
+These match the web client in anushthanum-client-secret.json.
+Important: Do not put client_secret in the frontend or in repo. The backend only needs GOOGLE_CLIENT_ID to verify tokens.
+Google Cloud Console
+Your JSON has javascript_origins: ["http://localhost:3000"] and redirect_uris: ["http://localhost:5000/auth/google/callback"]. For the current “Sign in with Google” button we only use the client_id and the GSI script (no redirect). If you add a server-side redirect flow later, keep the callback URL in the OAuth client.
+How to test
+Start backend and frontend.
+Open sign-in or sign-up.
+Click “Continue with Google”.
+Complete the Google consent flow; you should be signed in and redirected to /profile.
+If the button is disabled or shows “Google sign-in is not configured”, check that NEXT_PUBLIC_GOOGLE_CLIENT_ID is set in the frontend env and that the app was restarted after changing .env.

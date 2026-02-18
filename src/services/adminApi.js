@@ -1,96 +1,93 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+/**
+ * Admin API service – dashboard, categories, subcategories, products, orders, media, content.
+ * Uses adminAxios so all requests send the admin Bearer token.
+ */
+import adminApi from '@/lib/adminAxios';
 
-function getAuthToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('admin_token');
+function handleResponse(res) {
+  return res.data;
 }
 
-async function apiRequest(endpoint, options = {}) {
-  const token = getAuthToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
-  };
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
-  }
-  return response.json();
+function handleError(err) {
+  const message = err.response?.data?.message || err.message || 'Request failed';
+  const e = new Error(message);
+  e.status = err.response?.status;
+  e.data = err.response?.data;
+  throw e;
 }
 
 export const authApi = {
   login: (email, password) =>
-    apiRequest('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  logout: () => apiRequest('/auth/logout', { method: 'POST' }),
-  getCurrentUser: () => apiRequest('/auth/me'),
+    adminApi.post('/auth/admin/login', { email, password }).then(handleResponse).catch(handleError),
+  getCurrentUser: () => adminApi.get('/auth/admin/me').then(handleResponse).catch(handleError),
 };
 
 export const dashboardApi = {
-  getStats: () => apiRequest('/admin/dashboard/stats'),
+  getStats: () => adminApi.get('/admin/dashboard/stats').then(handleResponse).catch(handleError),
 };
 
 export const categoriesApi = {
-  getAll: () => apiRequest('/admin/categories'),
-  getById: (id) => apiRequest(`/admin/categories/${id}`),
-  create: (data) => apiRequest('/admin/categories', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id, data) => apiRequest(`/admin/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id) => apiRequest(`/admin/categories/${id}`, { method: 'DELETE' }),
+  getAll: () => adminApi.get('/admin/categories').then(handleResponse).catch(handleError),
+  getById: (id) => adminApi.get(`/admin/categories/${id}`).then(handleResponse).catch(handleError),
+  create: (data) => adminApi.post('/admin/categories', data).then(handleResponse).catch(handleError),
+  update: (id, data) =>
+    adminApi.put(`/admin/categories/${id}`, data).then(handleResponse).catch(handleError),
+  delete: (id) => adminApi.delete(`/admin/categories/${id}`).then(handleResponse).catch(handleError),
 };
 
 export const subCategoriesApi = {
-  getAll: () => apiRequest('/admin/subcategories'),
-  getByCategory: (categoryId) => apiRequest(`/admin/categories/${categoryId}/subcategories`),
-  getById: (id) => apiRequest(`/admin/subcategories/${id}`),
-  create: (data) => apiRequest('/admin/subcategories', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id, data) => apiRequest(`/admin/subcategories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id) => apiRequest(`/admin/subcategories/${id}`, { method: 'DELETE' }),
+  getAll: () => adminApi.get('/admin/subcategories').then(handleResponse).catch(handleError),
+  getByCategory: (categoryId) =>
+    adminApi.get(`/admin/categories/${categoryId}/subcategories`).then(handleResponse).catch(handleError),
+  getById: (id) => adminApi.get(`/admin/subcategories/${id}`).then(handleResponse).catch(handleError),
+  create: (data) =>
+    adminApi.post('/admin/subcategories', data).then(handleResponse).catch(handleError),
+  update: (id, data) =>
+    adminApi.put(`/admin/subcategories/${id}`, data).then(handleResponse).catch(handleError),
+  delete: (id) =>
+    adminApi.delete(`/admin/subcategories/${id}`).then(handleResponse).catch(handleError),
 };
 
 export const productsApi = {
-  getAll: (params) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return apiRequest(`/admin/products${qs}`);
-  },
-  getById: (id) => apiRequest(`/admin/products/${id}`),
-  create: (data) => apiRequest('/admin/products', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id, data) => apiRequest(`/admin/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id) => apiRequest(`/admin/products/${id}`, { method: 'DELETE' }),
+  getAll: (params) =>
+    adminApi.get('/admin/products', { params }).then(handleResponse).catch(handleError),
+  getById: (id) => adminApi.get(`/admin/products/${id}`).then(handleResponse).catch(handleError),
+  create: (data) => adminApi.post('/admin/products', data).then(handleResponse).catch(handleError),
+  update: (id, data) =>
+    adminApi.put(`/admin/products/${id}`, data).then(handleResponse).catch(handleError),
+  delete: (id) => adminApi.delete(`/admin/products/${id}`).then(handleResponse).catch(handleError),
 };
 
 export const ordersApi = {
-  getAll: (params) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return apiRequest(`/admin/orders${qs}`);
-  },
-  getById: (id) => apiRequest(`/admin/orders/${id}`),
+  getAll: (params) =>
+    adminApi.get('/admin/orders', { params }).then(handleResponse).catch(handleError),
+  getById: (id) => adminApi.get(`/admin/orders/${id}`).then(handleResponse).catch(handleError),
   updateStatus: (id, status) =>
-    apiRequest(`/admin/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    adminApi.patch(`/admin/orders/${id}/status`, { status }).then(handleResponse).catch(handleError),
 };
 
 export const mediaApi = {
-  getAll: () => apiRequest('/admin/media'),
-  upload: async (file) => {
-    const token = getAuthToken();
+  getAll: () => adminApi.get('/admin/media').then(handleResponse).catch(handleError),
+  upload: (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await fetch(`${API_BASE_URL}/admin/media/upload`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    });
-    if (!response.ok) throw new Error('Upload failed');
-    return response.json();
+    return adminApi
+      .post('/admin/media/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then(handleResponse)
+      .catch(handleError);
   },
-  delete: (id) => apiRequest(`/admin/media/${id}`, { method: 'DELETE' }),
+  delete: (id) => adminApi.delete(`/admin/media/${id}`).then(handleResponse).catch(handleError),
 };
 
 export const contentApi = {
-  getHomepageSections: () => apiRequest('/admin/content/homepage'),
+  getHomepageSections: () =>
+    adminApi.get('/admin/content/homepage').then(handleResponse).catch(handleError),
   updateHomepageSection: (id, data) =>
-    apiRequest(`/admin/content/homepage/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  getSiteSettings: () => apiRequest('/admin/content/settings'),
+    adminApi.put(`/admin/content/homepage/${id}`, data).then(handleResponse).catch(handleError),
+  getSiteSettings: () =>
+    adminApi.get('/admin/content/settings').then(handleResponse).catch(handleError),
   updateSiteSettings: (data) =>
-    apiRequest('/admin/content/settings', { method: 'PUT', body: JSON.stringify(data) }),
+    adminApi.put('/admin/content/settings', data).then(handleResponse).catch(handleError),
 };

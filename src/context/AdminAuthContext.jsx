@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '@/services/auth.service';
 
 const AdminAuthContext = createContext(undefined);
 
@@ -9,16 +10,13 @@ export function AdminAuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+    const token = authService.getAdminToken();
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('admin_user') : null;
     if (token && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('admin_token');
-          localStorage.removeItem('admin_user');
-        }
+        authService.clearAdminAuth();
       }
     }
     setIsLoading(false);
@@ -27,33 +25,25 @@ export function AdminAuthProvider({ children }) {
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      if (email && password) {
-        const mockUser = {
-          id: '1',
-          email,
-          name: 'Admin User',
-          role: 'admin',
-        };
-        const mockToken = 'mock_jwt_token_' + Date.now();
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('admin_token', mockToken);
-          localStorage.setItem('admin_user', JSON.stringify(mockUser));
-        }
-        setUser(mockUser);
+      const data = await authService.adminLogin({ email, password });
+      const admin = data.admin;
+      const accessToken = data.accessToken;
+      if (admin && accessToken) {
+        authService.setAdminAuth(admin, accessToken);
+        setUser(admin);
       } else {
-        throw new Error('Invalid credentials');
+        throw new Error(data.message || 'Login failed');
       }
+    } catch (err) {
+      const message = err.response?.data?.message || err.data?.message || err.message || 'Login failed';
+      throw new Error(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('admin_token');
-      localStorage.removeItem('admin_user');
-    }
+    authService.clearAdminAuth();
     setUser(null);
   };
 

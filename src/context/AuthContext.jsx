@@ -1,8 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-
-const AUTH_STORAGE_KEY = 'anushthanum_auth';
+import { authService } from '@/services/auth.service';
 
 const AuthContext = createContext(undefined);
 
@@ -10,80 +9,145 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    try {
-      const stored = typeof window !== 'undefined' && localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.user) setUser(parsed.user);
-      }
-    } catch (e) {
-      console.error('Failed to load auth:', e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const persistUser = useCallback((userData) => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user: userData }));
+  const setAuthFromResponse = useCallback((userData, accessToken) => {
+    authService.setAuth(userData, accessToken);
     setUser(userData);
   }, []);
 
-  const signIn = useCallback(
-    (email, password) => {
-      // Demo: accept any email + non-empty password and create a session
-      if (!email?.trim() || !password) {
-        return { success: false, error: 'Email and password are required.' };
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const token = authService.getToken();
+        const storedUser = authService.getStoredUser();
+        if (token && storedUser) {
+          try {
+            const res = await authService.getMe();
+            if (res.success && res.user) {
+              setUser(res.user);
+              authService.setAuth(res.user, token);
+            } else {
+              setUser(storedUser);
+            }
+          } catch {
+            setUser(storedUser);
+          }
+        } else if (token && !storedUser) {
+          try {
+            const res = await authService.getMe();
+            if (res.success && res.user) {
+              setUser(res.user);
+              authService.setAuth(res.user, token);
+            } else {
+              authService.clearAuth();
+              setUser(null);
+            }
+          } catch {
+            authService.clearAuth();
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+      } catch (e) {
+        console.error('Auth init failed:', e);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-      const userData = {
-        name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-        email: email.trim().toLowerCase(),
-        phone: '',
-        memberSince: new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
-      };
-      persistUser(userData);
-      return { success: true };
-    },
-    [persistUser]
-  );
+    };
+    init();
+  }, []);
 
-  const signUp = useCallback(
-    (name, email, phone, password) => {
-      if (!name?.trim() || !email?.trim() || !password) {
-        return { success: false, error: 'Name, email and password are required.' };
+  const signIn = useCallback(async (email, password) => {
+    try {
+      const res = await authService.login({ email, password });
+      if (res.success && res.user && res.accessToken) {
+        setAuthFromResponse(res.user, res.accessToken);
+        return { success: true };
       }
-      if (password.length < 6) {
-        return { success: false, error: 'Password must be at least 6 characters.' };
-      }
-      const userData = {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        phone: (phone || '').trim(),
-        memberSince: new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
+      return { success: false, error: res.message || 'Sign in failed.' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.data?.message || err.message || 'Sign in failed.',
       };
-      persistUser(userData);
-      return { success: true };
-    },
-    [persistUser]
-  );
+    }
+  }, [setAuthFromResponse]);
+
+  const signUp = useCallback(async (name, email, phone, password) => {
+    try {
+      const res = await authService.register({ name, email, phone: phone || undefined, password });
+      if (res.success) {
+        return {
+          success: true,
+          message: res.message,
+          email: res.email,
+          devOtp: res.devOtp,
+        };
+      }
+      return { success: false, error: res.message || 'Sign up failed.' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.data?.message || err.message || 'Sign up failed.',
+      };
+    }
+  }, []);
+
+  const verifyOtp = useCallback(async (email, otp) => {
+    try {
+      const res = await authService.verifyOtp({ email, otp });
+      if (res.success && res.user && res.accessToken) {
+        setAuthFromResponse(res.user, res.accessToken);
+        return { success: true };
+      }
+      return { success: false, error: res.message || 'Verification failed.' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.data?.message || err.message || 'Invalid or expired OTP.',
+      };
+    }
+  }, [setAuthFromResponse]);
+
+  const resendOtp = useCallback(async (email) => {
+    try {
+      const res = await authService.sendOtp({ email });
+      if (res.success) {
+        return { success: true, message: res.message, devOtp: res.devOtp };
+      }
+      return { success: false, error: res.message || 'Failed to resend OTP.' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.data?.message || err.message || 'Failed to resend OTP.',
+      };
+    }
+  }, []);
 
   const signOut = useCallback(() => {
-    if (typeof window !== 'undefined') localStorage.removeItem(AUTH_STORAGE_KEY);
+    authService.clearAuth();
     setUser(null);
   }, []);
 
-  /** Sign in with Google. Replace with real OAuth (NextAuth/Firebase) when backend is ready. */
-  const signInWithGoogle = useCallback(() => {
-    const userData = {
-      name: 'Google User',
-      email: 'user@gmail.com',
-      phone: '',
-      memberSince: new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }),
-    };
-    persistUser(userData);
-    return { success: true };
-  }, [persistUser]);
+  const signInWithGoogle = useCallback(async (token) => {
+    if (!token) {
+      return { success: false, error: 'Google token is required.' };
+    }
+    try {
+      const res = await authService.googleAuth({ token });
+      if (res.success && res.user && res.accessToken) {
+        setAuthFromResponse(res.user, res.accessToken);
+        return { success: true };
+      }
+      return { success: false, error: res.message || 'Google sign-in failed.' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.data?.message || err.message || 'Google sign-in failed.',
+      };
+    }
+  }, [setAuthFromResponse]);
 
   const value = {
     user,
@@ -91,6 +155,8 @@ export function AuthProvider({ children }) {
     isLoading,
     signIn,
     signUp,
+    verifyOtp,
+    resendOtp,
     signOut,
     signInWithGoogle,
   };
