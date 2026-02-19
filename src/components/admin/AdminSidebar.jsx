@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  BookOpen,
 } from 'lucide-react';
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { label: 'Sub-Categories', href: '/admin/subcategories', icon: Layers },
   { label: 'Products', href: '/admin/products', icon: Package },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { label: 'Blog Posts', href: '/admin/blogs', icon: BookOpen },
   { label: 'Media Manager', href: '/admin/media', icon: Image },
   { label: 'Content CMS', href: '/admin/content', icon: FileText },
   { label: 'Settings', href: '/admin/settings', icon: Settings },

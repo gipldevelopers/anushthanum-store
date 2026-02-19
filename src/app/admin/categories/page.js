@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,44 +8,78 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, FolderTree } from 'lucide-react';
-
-const mockCategories = [
-  { id: '1', name: 'Rudraksha', slug: 'rudraksha', description: 'Sacred beads', image: '/images/categories/rudraksha-category.jpg', status: 'active', productCount: 45, createdAt: '2024-01-15T10:30:00Z' },
-  { id: '2', name: 'Yantra', slug: 'yantra', description: 'Sacred symbols', image: '/images/categories/yantra-category.jpg', status: 'active', productCount: 28, createdAt: '2024-01-16T11:00:00Z' },
-  { id: '3', name: 'Bracelets', slug: 'bracelets', description: 'Spiritual wearables', image: '/images/categories/bracelets-category.jpg', status: 'active', productCount: 36, createdAt: '2024-01-17T09:15:00Z' },
-  { id: '4', name: 'Crystals', slug: 'crystals', description: 'Healing stones', image: '/images/categories/crystals-category.jpg', status: 'inactive', productCount: 52, createdAt: '2024-01-18T14:45:00Z' },
-];
+import { categoriesApi } from '@/services/adminApi';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('all');
   const [deleteId, setDeleteId] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      await new Promise((r) => setTimeout(r, 600));
-      setCategories(mockCategories);
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = filterType !== 'all' ? { type: filterType } : {};
+      const data = await categoriesApi.getAll(params);
+      setCategories(data?.categories ?? []);
+    } catch (e) {
+      toast.error(e?.message || 'Failed to load categories');
+      setCategories([]);
+    } finally {
       setLoading(false);
-    })();
-  }, []);
+    }
+  }, [filterType]);
 
-  const filtered = categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
-  const handleToggle = (id) => {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' } : c)));
-    toast.success('Status updated');
+  const filtered = categories.filter(
+    (c) => c.name?.toLowerCase().includes(search.toLowerCase()) || c.slug?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleToggle = async (cat) => {
+    const newStatus = cat.status === 'active' ? 'inactive' : 'active';
+    try {
+      await categoriesApi.update(cat.id, { status: newStatus });
+      setCategories((prev) => prev.map((c) => (c.id === cat.id ? { ...c, status: newStatus } : c)));
+      toast.success('Status updated');
+    } catch (e) {
+      toast.error(e?.message || 'Failed to update status');
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
-    setCategories((prev) => prev.filter((c) => c.id !== deleteId));
-    toast.success('Category deleted');
-    setDeleteId(null);
+    try {
+      await categoriesApi.delete(deleteId);
+      setCategories((prev) => prev.filter((c) => c.id !== deleteId));
+      toast.success('Category deleted');
+      setDeleteId(null);
+    } catch (e) {
+      toast.error(e?.message || 'Failed to delete category');
+    }
   };
 
   return (
@@ -53,7 +87,7 @@ export default function AdminCategoriesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Categories</h1>
-          <p className="text-muted-foreground mt-1">Manage product categories</p>
+          <p className="text-muted-foreground mt-1">Manage navbar and material-wise categories</p>
         </div>
         <Button asChild>
           <Link href="/admin/categories/new"><Plus className="h-4 w-4 mr-2" />Add Category</Link>
@@ -61,9 +95,21 @@ export default function AdminCategoriesPage() {
       </div>
       <Card>
         <CardContent className="pt-6">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search categories..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search categories..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="main">Navbar (main)</SelectItem>
+                <SelectItem value="material">Material-wise</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -80,9 +126,9 @@ export default function AdminCategoriesPage() {
                 <TableRow>
                   <TableHead className="w-[80px]">Image</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Products</TableHead>
+                  <TableHead className="hidden md:table-cell">Type</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="hidden lg:table-cell">Created</TableHead>
+                  <TableHead className="hidden lg:table-cell">Sort</TableHead>
                   <TableHead className="w-[80px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -92,9 +138,9 @@ export default function AdminCategoriesPage() {
                     <TableRow key={i}>
                       <TableCell><Skeleton className="h-12 w-12 rounded-lg" /></TableCell>
                       <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-8" /></TableCell>
+                      <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
                       <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-8" /></TableCell>
                       <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                     </TableRow>
                   ))
@@ -107,20 +153,26 @@ export default function AdminCategoriesPage() {
                     <TableRow key={cat.id}>
                       <TableCell>
                         <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden">
-                          <img src={cat.image} alt={cat.name} className="h-full w-full object-cover" />
+                          {cat.image ? (
+                            <img src={cat.image} alt={cat.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs">—</div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{cat.name}</p>
-                          <p className="text-sm text-muted-foreground truncate max-w-[200px]">{cat.description}</p>
+                          <p className="text-sm text-muted-foreground truncate max-w-[200px]">{cat.slug}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{cat.productCount}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline">{cat.type === 'material' ? 'Material' : 'Navbar'}</Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={cat.status === 'active' ? 'default' : 'secondary'}>{cat.status}</Badge>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">{new Date(cat.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">{cat.sortOrder ?? 0}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -130,7 +182,7 @@ export default function AdminCategoriesPage() {
                             <DropdownMenuItem asChild>
                               <Link href={`/admin/categories/${cat.id}/edit`}><Pencil className="h-4 w-4 mr-2" />Edit</Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggle(cat.id)}>
+                            <DropdownMenuItem onClick={() => handleToggle(cat)}>
                               {cat.status === 'active' ? <><EyeOff className="h-4 w-4 mr-2" />Deactivate</> : <><Eye className="h-4 w-4 mr-2" />Activate</>}
                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteId(cat.id)}>
@@ -151,7 +203,7 @@ export default function AdminCategoriesPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Category</AlertDialogTitle>
-            <AlertDialogDescription>Are you sure? This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>Are you sure? This action cannot be undone. Sub-categories under this category may also be affected.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

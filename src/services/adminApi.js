@@ -27,7 +27,8 @@ export const dashboardApi = {
 };
 
 export const categoriesApi = {
-  getAll: () => adminApi.get('/admin/categories').then(handleResponse).catch(handleError),
+  getAll: (params) =>
+    adminApi.get('/admin/categories', { params }).then(handleResponse).catch(handleError),
   getById: (id) => adminApi.get(`/admin/categories/${id}`).then(handleResponse).catch(handleError),
   create: (data) => adminApi.post('/admin/categories', data).then(handleResponse).catch(handleError),
   update: (id, data) =>
@@ -36,7 +37,8 @@ export const categoriesApi = {
 };
 
 export const subCategoriesApi = {
-  getAll: () => adminApi.get('/admin/subcategories').then(handleResponse).catch(handleError),
+  getAll: (params) =>
+    adminApi.get('/admin/subcategories', { params }).then(handleResponse).catch(handleError),
   getByCategory: (categoryId) =>
     adminApi.get(`/admin/categories/${categoryId}/subcategories`).then(handleResponse).catch(handleError),
   getById: (id) => adminApi.get(`/admin/subcategories/${id}`).then(handleResponse).catch(handleError),
@@ -64,6 +66,36 @@ export const ordersApi = {
   getById: (id) => adminApi.get(`/admin/orders/${id}`).then(handleResponse).catch(handleError),
   updateStatus: (id, status) =>
     adminApi.patch(`/admin/orders/${id}/status`, { status }).then(handleResponse).catch(handleError),
+};
+
+export const blogsApi = {
+  getAll: (params) =>
+    adminApi.get('/admin/blogs', { params }).then(handleResponse).catch(handleError),
+  getById: (id) => adminApi.get(`/admin/blogs/${id}`).then(handleResponse).catch(handleError),
+  create: (data) => adminApi.post('/admin/blogs', data).then(handleResponse).catch(handleError),
+  update: (id, data) =>
+    adminApi.put(`/admin/blogs/${id}`, data).then(handleResponse).catch(handleError),
+  delete: (id) => adminApi.delete(`/admin/blogs/${id}`).then(handleResponse).catch(handleError),
+};
+
+/** Upload image (e.g. category image). Returns { url } (path like /uploads/categories/xxx.jpg). */
+export const uploadApi = {
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return adminApi
+      .post('/admin/upload/image', formData)
+      .then(handleResponse)
+      .catch(handleError);
+  },
+  uploadBlogImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return adminApi
+      .post('/admin/upload/blog-image', formData)
+      .then(handleResponse)
+      .catch(handleError);
+  },
 };
 
 export const mediaApi = {

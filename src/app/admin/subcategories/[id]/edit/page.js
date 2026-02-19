@@ -10,15 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Upload, X } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-const mockCategories = [
-  { id: '1', name: 'Rudraksha' },
-  { id: '2', name: 'Yantra' },
-  { id: '3', name: 'Bracelets' },
-  { id: '4', name: 'Crystals' },
-];
+import { subCategoriesApi, categoriesApi } from '@/services/adminApi';
 
 export default function EditSubCategoryPage() {
   const router = useRouter();
@@ -26,49 +20,75 @@ export default function EditSubCategoryPage() {
   const id = params?.id;
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
-    parentCategoryId: '',
+    parentId: '',
     name: '',
     slug: '',
     description: '',
-    image: '',
-    status: true,
+    status: 'active',
+    sortOrder: 0,
   });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await categoriesApi.getAll({ type: 'main' });
+        setCategories(data?.categories ?? []);
+      } catch {
+        setCategories([]);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!id) return;
     (async () => {
-      await new Promise((r) => setTimeout(r, 500));
-      setFormData({
-        parentCategoryId: '1',
-        name: 'Single Mukhi',
-        slug: 'single-mukhi',
-        description: '1 to 14 Mukhi beads',
-        image: '',
-        status: true,
-      });
-      setLoading(false);
+      try {
+        const data = await subCategoriesApi.getById(id);
+        const sub = data?.subCategory;
+        if (!sub) {
+          toast.error('Sub-category not found');
+          router.push('/admin/subcategories');
+          return;
+        }
+        setFormData({
+          parentId: String(sub.parentId ?? sub.parent?.id ?? ''),
+          name: sub.name ?? '',
+          slug: sub.slug ?? '',
+          description: sub.description ?? '',
+          status: sub.status ?? 'active',
+          sortOrder: sub.sortOrder ?? 0,
+        });
+      } catch (e) {
+        toast.error(e?.message || 'Failed to load sub-category');
+        router.push('/admin/subcategories');
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [id]);
-
-  const handleNameChange = (name) => {
-    setFormData((prev) => ({ ...prev, name, slug: prev.slug }));
-  };
+  }, [id, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.parentCategoryId) {
-      toast.error('Name and parent category are required');
+    if (!formData.name.trim()) {
+      toast.error('Name is required');
       return;
     }
     setSaving(true);
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-      toast.success('Sub-category updated successfully.');
+      const sortOrder = Number(formData.sortOrder);
+      await subCategoriesApi.update(id, {
+        name: formData.name.trim(),
+        slug: formData.slug?.trim(),
+        description: formData.description?.trim() || null,
+        status: formData.status,
+        sortOrder: Number.isNaN(sortOrder) ? 0 : sortOrder,
+      });
+      toast.success('Sub-category updated.');
       router.push('/admin/subcategories');
-    } catch {
-      toast.error('Failed to save');
+    } catch (err) {
+      toast.error(err?.message || 'Failed to save');
     } finally {
       setSaving(false);
     }
@@ -97,16 +117,16 @@ export default function EditSubCategoryPage() {
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
-            <CardDescription>Sub-category details</CardDescription>
+            <CardDescription>Sub-category details (parent cannot be changed here)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Parent Category *</Label>
-              <Select value={formData.parentCategoryId} onValueChange={(v) => setFormData((prev) => ({ ...prev, parentCategoryId: v }))}>
+              <Label>Parent Category</Label>
+              <Select value={formData.parentId} onValueChange={(v) => setFormData((p) => ({ ...p, parentId: v }))} disabled>
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
-                  {mockCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -114,23 +134,55 @@ export default function EditSubCategoryPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Sub-Category Name *</Label>
-                <Input id="name" value={formData.name} onChange={(e) => handleNameChange(e.target.value)} />
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="slug">Slug</Label>
-                <Input id="slug" value={formData.slug} readOnly className="bg-muted" />
+                <Input
+                  id="slug"
+                  value={formData.slug}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+                  className="bg-muted"
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea id="description" value={formData.description} onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))} rows={3} />
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                rows={3}
+              />
             </div>
             <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="status">Active Status</Label>
-                <p className="text-sm text-muted-foreground">Visible on website</p>
+              <div className="space-y-2">
+                <Label htmlFor="sortOrder">Sort order</Label>
+                <Input
+                  id="sortOrder"
+                  type="number"
+                  min={0}
+                  value={formData.sortOrder}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, sortOrder: e.target.value }))}
+                />
               </div>
-              <Switch id="status" checked={formData.status} onCheckedChange={(c) => setFormData((prev) => ({ ...prev, status: c }))} />
+              <div className="flex items-center justify-between flex-1 max-w-xs pl-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="status">Active</Label>
+                  <p className="text-sm text-muted-foreground">Visible on website</p>
+                </div>
+                <Switch
+                  id="status"
+                  checked={formData.status === 'active'}
+                  onCheckedChange={(c) =>
+                    setFormData((prev) => ({ ...prev, status: c ? 'active' : 'inactive' }))
+                  }
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

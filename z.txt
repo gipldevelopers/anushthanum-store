@@ -96,3 +96,110 @@ Open sign-in or sign-up.
 Click “Continue with Google”.
 Complete the Google consent flow; you should be signed in and redirected to /profile.
 If the button is disabled or shows “Google sign-in is not configured”, check that NEXT_PUBLIC_GOOGLE_CLIENT_ID is set in the frontend env and that the app was restarted after changing .env.
+------------------------------------------------------------------------
+Summary of what’s in place:
+1. Schema
+Category has a type field: "main" (navbar) or "material" (material-wise, below hero).
+SubCategory is unchanged (used for navbar dropdowns under main categories).
+2. Public API (no auth)
+Method	Endpoint	Query	Description
+GET	/api/categories	type=main \	type=material (optional)	List active categories. main includes subCategories.
+GET http://localhost:5000/api/categories → all active categories (main ones with subcategories).
+GET http://localhost:5000/api/categories?type=main → only navbar categories (with subcategories).
+GET http://localhost:5000/api/categories?type=material → only material-wise categories (for below-hero tiles).
+3. Admin APIs (Bearer admin token)
+Header: Authorization: Bearer <admin_access_token>
+Categories
+Method	Endpoint	Description
+GET	/api/admin/categories	List all (optional query: ?type=main or ?type=material)
+GET	/api/admin/categories/:id	Get one category
+GET	/api/admin/categories/:id/subcategories	List subcategories of a category
+POST	/api/admin/categories	Create category
+PUT	/api/admin/categories/:id	Update category
+DELETE	/api/admin/categories/:id	Delete category
+Subcategories
+Method	Endpoint	Description
+GET	/api/admin/subcategories	List all (optional ?parentId=1 or ?categoryId=1)
+GET	/api/admin/subcategories/:id	Get one subcategory
+POST	/api/admin/subcategories	Create subcategory
+PUT	/api/admin/subcategories/:id	Update subcategory
+DELETE	/api/admin/subcategories/:id	Delete subcategory
+4. Postman
+Admin token:
+POST http://localhost:5000/api/auth/admin/login
+Body: { "email": "admin@anushthanum.com", "password": "Admin@123" }
+Use the returned accessToken as Bearer token for admin endpoints.
+Public categories:
+GET http://localhost:5000/api/categories
+GET http://localhost:5000/api/categories?type=material
+Admin – create category (navbar):
+POST http://localhost:5000/api/admin/categories
+Headers: Authorization: Bearer <token>, Content-Type: application/json
+Body:
+   {     "name": "Rudraksha",     "slug": "rudraksha",     "type": "main",     "status": "active",     "sortOrder": 0   }
+Admin – create category (material):
+POST http://localhost:5000/api/admin/categories
+Body:
+   {     "name": "Rose Quartz",     "slug": "rose-quartz",     "image": "https://example.com/rose-quartz.jpg",     "type": "material",     "status": "active",     "sortOrder": 0   }
+Admin – create subcategory:
+POST http://localhost:5000/api/admin/subcategories
+Body:
+   {     "parentId": 1,     "name": "Rudraksha Beads",     "slug": "beads",     "status": "active",     "sortOrder": 0   }
+Full list of endpoints and examples is in backend/POSTMAN-API-GUIDE.md (Section 4).
+5. Category payload (create/update)
+name (required for create)
+slug (optional; derived from name if omitted)
+description (optional)
+image (optional; URL or path)
+type: "main" (navbar) or "material" (below-hero)
+status: "active" or "inactive"
+sortOrder (number)
+seoTitle, seoDescription (optional)
+6. Frontend admin
+Your existing adminApi.js already has:
+categoriesApi.getAll(), getById(), create(), update(), delete()
+subCategoriesApi.getAll(), getByCategory(), getById(), create(), update(), delete()
+They match the new backend. In the admin panel, add a type field when creating/editing categories (main vs material) and use image for material categories so the below-hero section can show them. If you want, we can wire the homepage and navbar to use GET /api/categories and GET /api/categories?type=material next.
+------------------------------------------------------------------------
+Summary of what’s in place:
+Admin subcategories – wired to API
+List (/admin/subcategories)
+Loads subcategories with subCategoriesApi.getAll(params); optional parentId filter.
+Loads parent list with categoriesApi.getAll({ type: 'main' }).
+Search by name, filter by parent category (dropdown).
+Table: name, slug, parent (name badge), sort order, status.
+Row actions: Edit, Activate/Deactivate (subCategoriesApi.update(id, { status })), Delete (with confirm; subCategoriesApi.delete(id)).
+New (/admin/subcategories/new)
+Parent dropdown from categoriesApi.getAll({ type: 'main' }).
+Form: parent, name, slug (auto from name), description, sort order, status.
+Submit: subCategoriesApi.create({ parentId, name, slug, description, status, sortOrder }).
+Edit (/admin/subcategories/[id]/edit)
+Load: subCategoriesApi.getById(id); parent list from categoriesApi.getAll({ type: 'main' }).
+Parent field shown but disabled (backend doesn’t support changing parent on update).
+Form: name, slug, description, sort order, status.
+Submit: subCategoriesApi.update(id, payload) with a numeric sortOrder.
+Categories and subcategories in the admin panel now use the real APIs end to end. No linter issues reported. If you want, we can next hook the public site (navbar and below-hero) to the public category API.
+-------------------------------------------------------------------------
+ummary of what was implemented:
+Backend (Multer)
+Upload module (backend/src/modules/upload/):
+upload.multer.js – Multer disk storage for uploads/categories/, unique filenames, image-only filter (JPEG, PNG, GIF, WebP), 5MB limit.
+upload.controller.js – Handles POST, returns { success: true, url: '/uploads/categories/filename.jpg' }.
+upload.routes.js – POST /api/admin/upload/image with field name image, protected by authenticateAdmin.
+app.js – Serves uploads at /uploads, mounts upload routes at /api/admin/upload, and maps Multer errors (e.g. file too large) to 400 with a clear message.
+.gitignore – Added /uploads so uploaded files are not committed.
+Frontend
+adminApi – New uploadApi.uploadImage(file) that POSTs the file as image to /admin/upload/image (no manual Content-Type so the browser sets multipart boundary).
+Add Category (new/page.js) – Replaced “Image URL” with:
+Hidden file input and an “Upload image” button.
+On choose: client-side type/size check, then uploadApi.uploadImage(file) and set formData.image to the returned url.
+Preview with remove (X); hint: “JPEG, PNG, GIF or WebP, max 5MB”.
+Edit Category ([id]/edit/page.js) – Same upload UI and preview; existing image is shown and can be replaced or removed.
+Displaying images
+Stored value is a path like /uploads/categories/xyz.jpg. The frontend builds the full URL with NEXT_PUBLIC_API_URL (e.g. http://localhost:5000) so the preview and site can load images from the API server.
+Flow
+User clicks “Upload image” and selects a file.
+Frontend sends it to POST /api/admin/upload/image (admin auth).
+Backend saves under uploads/categories/ and returns the URL path.
+Frontend saves that path in the category form and sends it in create/update as image (unchanged API contract).
+No linter issues reported. You can test by adding or editing a category and uploading an image.

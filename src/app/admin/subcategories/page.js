@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,78 +39,88 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import {
-  Plus,
-  Search,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  Eye,
-  EyeOff,
-  Layers,
-} from 'lucide-react';
-
-const mockCategories = [
-  { id: '1', name: 'Rudraksha' },
-  { id: '2', name: 'Yantra' },
-  { id: '3', name: 'Bracelets' },
-  { id: '4', name: 'Crystals' },
-];
-
-const mockSubCategories = [
-  { id: '1', parentCategoryId: '1', parentCategoryName: 'Rudraksha', name: 'Single Mukhi', slug: 'single-mukhi', description: '1 to 14 Mukhi beads', status: 'active', productCount: 14, createdAt: '2024-01-15T10:30:00Z', updatedAt: '2024-01-15T10:30:00Z' },
-  { id: '2', parentCategoryId: '1', parentCategoryName: 'Rudraksha', name: 'Mala', slug: 'mala', description: 'Rudraksha malas', status: 'active', productCount: 8, createdAt: '2024-01-16T11:00:00Z', updatedAt: '2024-01-16T11:00:00Z' },
-  { id: '3', parentCategoryId: '2', parentCategoryName: 'Yantra', name: 'Pendants', slug: 'pendants', description: 'Yantra pendants', status: 'active', productCount: 12, createdAt: '2024-01-17T09:15:00Z', updatedAt: '2024-01-17T09:15:00Z' },
-  { id: '4', parentCategoryId: '3', parentCategoryName: 'Bracelets', name: 'Gemstone Bracelets', slug: 'gemstone-bracelets', description: 'Crystal and gemstone bracelets', status: 'inactive', productCount: 18, createdAt: '2024-01-18T14:45:00Z', updatedAt: '2024-01-18T14:45:00Z' },
-];
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Layers } from 'lucide-react';
+import { subCategoriesApi, categoriesApi } from '@/services/adminApi';
 
 export default function AdminSubCategoriesPage() {
   const [subCategories, setSubCategories] = useState([]);
-  const [categories] = useState(mockCategories);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [deleteId, setDeleteId] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      await new Promise((r) => setTimeout(r, 600));
-      setSubCategories(mockSubCategories);
-      setLoading(false);
-    };
-    fetchData();
+  const fetchCategories = useCallback(async () => {
+    try {
+      const data = await categoriesApi.getAll({ type: 'main' });
+      setCategories(data?.categories ?? []);
+    } catch {
+      setCategories([]);
+    }
   }, []);
 
+  const fetchSubCategories = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = filterCategory !== 'all' ? { parentId: filterCategory } : {};
+      const data = await subCategoriesApi.getAll(params);
+      setSubCategories(data?.subCategories ?? []);
+    } catch (e) {
+      toast.error(e?.message || 'Failed to load sub-categories');
+      setSubCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterCategory]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    fetchSubCategories();
+  }, [fetchSubCategories]);
+
   const filteredSubCategories = subCategories.filter((sub) => {
-    const matchesSearch = sub.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || sub.parentCategoryId === filterCategory;
+    const matchesSearch = sub.name?.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory =
+      filterCategory === 'all' || String(sub.parentId) === String(filterCategory);
     return matchesSearch && matchesCategory;
   });
 
-  const handleToggleStatus = (id) => {
-    setSubCategories((prev) =>
-      prev.map((sub) =>
-        sub.id === id
-          ? { ...sub, status: sub.status === 'active' ? 'inactive' : 'active' }
-          : sub
-      )
-    );
-    toast.success('Status updated successfully');
+  const handleToggleStatus = async (sub) => {
+    const newStatus = sub.status === 'active' ? 'inactive' : 'active';
+    try {
+      await subCategoriesApi.update(sub.id, { status: newStatus });
+      setSubCategories((prev) =>
+        prev.map((s) => (s.id === sub.id ? { ...s, status: newStatus } : s))
+      );
+      toast.success('Status updated');
+    } catch (e) {
+      toast.error(e?.message || 'Failed to update status');
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
-    setSubCategories((prev) => prev.filter((sub) => sub.id !== deleteId));
-    toast.success('Sub-category deleted successfully');
-    setDeleteId(null);
+    try {
+      await subCategoriesApi.delete(deleteId);
+      setSubCategories((prev) => prev.filter((s) => s.id !== deleteId));
+      toast.success('Sub-category deleted');
+      setDeleteId(null);
+    } catch (e) {
+      toast.error(e?.message || 'Failed to delete');
+    }
   };
+
+  const parentName = (sub) => sub.parent?.name ?? categories.find((c) => c.id === sub.parentId)?.name ?? sub.parentId;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Sub-Categories</h1>
-          <p className="text-muted-foreground mt-1">Manage product sub-categories</p>
+          <p className="text-muted-foreground mt-1">Manage sub-categories under navbar categories</p>
         </div>
         <Button asChild>
           <Link href="/admin/subcategories/new">
@@ -133,13 +143,15 @@ export default function AdminSubCategoriesPage() {
               />
             </div>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  <SelectItem key={cat.id} value={String(cat.id)}>
+                    {cat.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -161,7 +173,7 @@ export default function AdminSubCategoriesPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Parent Category</TableHead>
-                  <TableHead className="hidden md:table-cell">Products</TableHead>
+                  <TableHead className="hidden md:table-cell">Sort</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[80px]">Actions</TableHead>
                 </TableRow>
@@ -190,16 +202,14 @@ export default function AdminSubCategoriesPage() {
                         <div>
                           <p className="font-medium">{sub.name}</p>
                           <p className="text-sm text-muted-foreground truncate max-w-[200px]">
-                            {sub.description}
+                            {sub.slug}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{sub.parentCategoryName}</Badge>
+                        <Badge variant="outline">{parentName(sub)}</Badge>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {sub.productCount}
-                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{sub.sortOrder ?? 0}</TableCell>
                       <TableCell>
                         <Badge variant={sub.status === 'active' ? 'default' : 'secondary'}>
                           {sub.status}
@@ -219,7 +229,7 @@ export default function AdminSubCategoriesPage() {
                                 Edit
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleStatus(sub.id)}>
+                            <DropdownMenuItem onClick={() => handleToggleStatus(sub)}>
                               {sub.status === 'active' ? (
                                 <>
                                   <EyeOff className="h-4 w-4 mr-2" />
@@ -256,12 +266,15 @@ export default function AdminSubCategoriesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Sub-Category</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this sub-category? Products in this sub-category will be affected.
+              Are you sure? Products in this sub-category may be affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

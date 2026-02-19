@@ -24,6 +24,10 @@ adminApi.interceptors.request.use(
   (config) => {
     const token = getAdminToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
+    // Let the browser set Content-Type with boundary for FormData (file uploads)
+    if (config.data && typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => Promise.reject(error)
