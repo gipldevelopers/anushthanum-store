@@ -96,6 +96,14 @@ export const uploadApi = {
       .then(handleResponse)
       .catch(handleError);
   },
+  uploadSubcategoryImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return adminApi
+      .post('/admin/upload/subcategory-image', formData)
+      .then(handleResponse)
+      .catch(handleError);
+  },
 };
 
 export const mediaApi = {

@@ -33,10 +33,8 @@ import {
 } from '@/components/ui/select';
 import CategoryFilter from '@/components/sections/CategoryFilter';
 import ProductCard from '@/components/ui/ProductCard';
-import {
-    categories,
-    products,
-} from '@/data/products';
+import { products } from '@/data/products';
+import { getCategories } from '@/services/categoryApi';
 import { useState, useEffect, useMemo } from 'react';
 
 const sortOptions = [
@@ -156,12 +154,19 @@ const initialPlatings = Object.keys(platingKeywords).map(p => ({ id: p, label: p
 
 export default function CategoryPage() {
     const params = useParams();
-    // params.slug is an array in [...slug]
     const slugArray = params?.slug || [];
     const categorySlug = slugArray[0] || '';
     const subCategorySlug = slugArray[1] || '';
 
+    const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getCategories({ type: 'main' })
+            .then((res) => setCategories(res?.categories || []))
+            .catch(() => setCategories([]));
+    }, []);
+
     const [viewMode, setViewMode] = useState('grid');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -174,7 +179,10 @@ export default function CategoryPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 12;
 
-    const category = categories.find((c) => c.slug === categorySlug);
+    const category = useMemo(
+        () => categories.find((c) => c.slug === categorySlug),
+        [categories, categorySlug]
+    );
 
     // Filter by Category and Subcategory
     const baseProducts = useMemo(() => {
@@ -373,7 +381,9 @@ export default function CategoryPage() {
 
 
 
-    if (!category && !categorySlug) {
+    const subCategories = category?.subCategories || [];
+
+    if (!categorySlug || (categories.length > 0 && !category)) {
         return (
             <div className="container py-20 text-center">
                 <h1 className="text-2xl font-serif font-bold mb-4">
@@ -430,7 +440,30 @@ export default function CategoryPage() {
 
                 <div className="flex gap-8">
                     <aside className="hidden lg:block w-64 flex-shrink-0">
-                        <div className="sticky top-28">
+                        <div className="sticky top-28 space-y-6">
+                            {subCategories.length > 0 && (
+                                <div className="rounded-lg border border-border p-4">
+                                    <h3 className="font-semibold mb-3">Subcategories</h3>
+                                    <nav className="space-y-1">
+                                        <Link
+                                            href={`/category/${categorySlug}`}
+                                            className={`block py-1.5 px-2 rounded text-sm transition-colors ${!subCategorySlug ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+                                        >
+                                            All {category?.name || categorySlug}
+                                        </Link>
+                                        {subCategories.map((sub) => (
+                                            <Link
+                                                key={sub.id}
+                                                href={`/category/${categorySlug}/${sub.slug}`}
+                                                className={`block py-1.5 px-2 rounded text-sm transition-colors ${subCategorySlug === sub.slug ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+                                            >
+                                                {sub.name}
+                                            </Link>
+                                        ))}
+                                    </nav>
+                                </div>
+                            )}
+                            <div>
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="font-semibold">Filters</h3>
                                 {activeFilterCount > 0 && (
@@ -454,6 +487,7 @@ export default function CategoryPage() {
                                 clearFilters={clearFilters}
                                 activeFilterCount={activeFilterCount}
                             />
+                            </div>
                         </div>
                     </aside>
 

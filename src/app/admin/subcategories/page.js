@@ -42,6 +42,15 @@ import { toast } from 'sonner';
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Layers } from 'lucide-react';
 import { subCategoriesApi, categoriesApi } from '@/services/adminApi';
 
+const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
+  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
+  : '';
+function imageSrc(url) {
+  if (!url) return null;
+  if (url.startsWith('http') || url.startsWith('//')) return url;
+  return API_ORIGIN ? `${API_ORIGIN}${url}` : url;
+}
+
 export default function AdminSubCategoriesPage() {
   const [subCategories, setSubCategories] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -171,6 +180,7 @@ export default function AdminSubCategoriesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[70px]">Image</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Parent Category</TableHead>
                   <TableHead className="hidden md:table-cell">Sort</TableHead>
@@ -182,6 +192,7 @@ export default function AdminSubCategoriesPage() {
                 {loading ? (
                   [...Array(4)].map((_, i) => (
                     <TableRow key={i}>
+                      <TableCell><Skeleton className="h-10 w-12 rounded" /></TableCell>
                       <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                       <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                       <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-8" /></TableCell>
@@ -191,13 +202,22 @@ export default function AdminSubCategoriesPage() {
                   ))
                 ) : filteredSubCategories.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No sub-categories found
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredSubCategories.map((sub) => (
                     <TableRow key={sub.id}>
+                      <TableCell>
+                        <div className="h-10 w-12 rounded bg-muted overflow-hidden">
+                          {sub.image ? (
+                            <img src={imageSrc(sub.image) || sub.image} alt={sub.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs">—</div>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{sub.name}</p>

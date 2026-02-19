@@ -36,101 +36,12 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
 import { products } from '@/data/products';
+import { getCategories } from '@/services/categoryApi';
 
-const navItems = [
-  {
-    label: 'Home',
-    href: '/',
-  },
-  {
-    label: 'Rudraksha',
-    href: '/category/rudraksha',
-    dropdown: [
-      {
-        label: 'Rudraksha Beads',
-        href: '/category/rudraksha?type=beads',
-        dropdown: [
-          { label: 'Nirakar (0 Mukhi) Rudraksha', href: '/category/rudraksha/0-mukhi' },
-          { label: '1 Mukhi Rudraksha', href: '/category/rudraksha/1-mukhi' },
-          { label: '2 Mukhi Rudraksha', href: '/category/rudraksha/2-mukhi' },
-          { label: '3 Mukhi Rudraksha', href: '/category/rudraksha/3-mukhi' },
-          { label: '4 Mukhi Rudraksha', href: '/category/rudraksha/4-mukhi' },
-          { label: '5 Mukhi Rudraksha', href: '/category/rudraksha/5-mukhi' },
-          { label: '6 Mukhi Rudraksha', href: '/category/rudraksha/6-mukhi' },
-          { label: '7 Mukhi Rudraksha', href: '/category/rudraksha/7-mukhi' },
-          { label: '8 Mukhi Rudraksha', href: '/category/rudraksha/8-mukhi' },
-          { label: '9 Mukhi Rudraksha', href: '/category/rudraksha/9-mukhi' },
-          { label: '10 Mukhi Rudraksha', href: '/category/rudraksha/10-mukhi' },
-          { label: '11 Mukhi Rudraksha', href: '/category/rudraksha/11-mukhi' },
-          { label: '12 Mukhi Rudraksha', href: '/category/rudraksha/12-mukhi' },
-          { label: '13 Mukhi Rudraksha', href: '/category/rudraksha/13-mukhi' },
-          { label: '14 Mukhi Rudraksha', href: '/category/rudraksha/14-mukhi' },
-          { label: 'Gauri Shankar Rudraksha', href: '/category/rudraksha/gauri-shankar' },
-          { label: 'Ganesh Rudraksha', href: '/category/rudraksha/ganesh' },
-        ]
-      },
-      { label: 'Rudraksha Bracelet', href: '/category/bracelets?type=rudraksha' },
-      { label: 'Rudraksha Mala', href: '/category/rudraksha?type=mala' },
-    ],
-  },
-  {
-    label: 'Malas',
-    href: '/category/malas',
-    dropdown: [
-      { label: 'Rudraksha Mala', href: '/category/malas/rudraksha' },
-      { label: 'Crystal Mala', href: '/category/malas/crystal' },
-      { label: 'Tulsi Mala', href: '/category/malas/tulsi' },
-      { label: 'Sandalwood Mala', href: '/category/malas/sandalwood' },
-    ],
-  },
-  {
-    label: 'Yantra',
-    href: '/category/yantra',
-    dropdown: [
-      { label: 'Sri Yantra', href: '/category/yantra?type=sri' },
-      { label: 'Navgraha Yantra', href: '/category/yantra?type=navgraha' },
-      { label: 'Yantra Pendants', href: '/category/yantra?type=pendant' },
-    ],
-  },
-  {
-    label: 'Bracelets',
-    href: '/category/bracelets',
-    dropdown: [
-      { label: 'Rudraksha Bracelets', href: '/category/bracelets?type=rudraksha' },
-      { label: 'Crystal Bracelets', href: '/category/bracelets?type=crystal' },
-      { label: 'Gemstone Bracelets', href: '/category/bracelets?type=gemstone' },
-    ],
-  },
-  {
-    label: 'Crystals',
-    href: '/category/crystals',
-    dropdown: [
-      { label: 'Healing Crystals', href: '/category/crystals?type=healing' },
-      { label: 'Crystal Spheres', href: '/category/crystals?type=sphere' },
-      { label: 'Crystal Points', href: '/category/crystals?type=points' },
-    ],
-  },
-  {
-    label: 'Jewellery',
-    href: '/category/jewellery',
-    dropdown: [
-      { label: 'Rings', href: '/category/jewellery?type=rings' },
-      { label: 'Earrings', href: '/category/jewellery?type=earrings' },
-      { label: 'Necklaces', href: '/category/jewellery?type=necklaces' },
-    ],
-  },
-  {
-    label: 'Candles',
-    href: '/category/candles',
-    dropdown: [
-      { label: 'Scented Candles', href: '/category/candles?type=scented' },
-      { label: 'Ritual Candles', href: '/category/candles?type=ritual' },
-    ],
-  },
-  {
-    label: 'Shop by Intention',
-    href: '/browse-by-intention',
-  },
+/** Static nav items (not from API) */
+const staticNavItems = [
+  { label: 'Home', href: '/' },
+  { label: 'Shop by Intention', href: '/browse-by-intention' },
   {
     label: 'Articles',
     href: '/blog',
@@ -144,6 +55,41 @@ const navItems = [
   },
 ];
 
+/** Build nav items from API categories (main + subcategories) */
+function buildNavItemsFromCategories(categories) {
+  if (!Array.isArray(categories) || categories.length === 0) return staticNavItems;
+  const categoryItems = categories.map((cat) => {
+    const subs = cat.subCategories || [];
+    const dropdown = subs.length > 0
+      ? subs.map((sub) => ({
+          label: sub.name,
+          href: `/category/${cat.slug}/${sub.slug}`,
+        }))
+      : undefined;
+    return {
+      label: cat.name,
+      href: `/category/${cat.slug}`,
+      ...(dropdown && dropdown.length > 0 && { dropdown }),
+    };
+  });
+  return [
+    { label: 'Home', href: '/' },
+    ...categoryItems,
+    { label: 'Shop by Intention', href: '/browse-by-intention' },
+    {
+      label: 'Articles',
+      href: '/blog',
+      dropdown: [
+        { label: 'All Articles', href: '/blog' },
+        { label: 'Astrology Insights', href: '/blog?category=astrology' },
+        { label: 'Spiritual Guidance', href: '/blog?category=spiritual' },
+        { label: 'Product Education', href: '/blog?category=education' },
+        { label: 'Occult Science', href: '/blog?category=occult' },
+      ],
+    },
+  ];
+}
+
 const mobileNavItems = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Track Order', href: '/track-order', icon: Package },
@@ -151,6 +97,14 @@ const mobileNavItems = [
 ];
 
 export default function Navbar() {
+  const [navItems, setNavItems] = useState(buildNavItemsFromCategories([]));
+
+  useEffect(() => {
+    getCategories({ type: 'main' })
+      .then((res) => setNavItems(buildNavItemsFromCategories(res?.categories || [])))
+      .catch(() => setNavItems(staticNavItems));
+  }, []);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
