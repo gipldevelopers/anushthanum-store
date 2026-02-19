@@ -33,9 +33,31 @@ import {
 } from '@/components/ui/select';
 import CategoryFilter from '@/components/sections/CategoryFilter';
 import ProductCard from '@/components/ui/ProductCard';
-import { products } from '@/data/products';
 import { getCategories } from '@/services/categoryApi';
+import { getProducts } from '@/services/productApi';
 import { useState, useEffect, useMemo } from 'react';
+
+const UPLOAD_BASE = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_SERVER_URL || process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || '')
+  : '';
+
+function toFullImageUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return path.startsWith('/') ? `${UPLOAD_BASE}${path}` : `${UPLOAD_BASE}/${path}`;
+}
+
+function mapProductImages(product) {
+  const base = product?.images?.length
+    ? product.images.map((img) => (typeof img === 'string' ? toFullImageUrl(img) : img)).filter(Boolean)
+    : product?.thumbnail
+      ? [toFullImageUrl(product.thumbnail)]
+      : ['/placeholder.svg'];
+  return {
+    ...product,
+    images: base.length ? base : ['/placeholder.svg'],
+  };
+}
 
 const sortOptions = [
     { value: 'popular', label: 'Most Popular' },
@@ -43,27 +65,6 @@ const sortOptions = [
     { value: 'price-low', label: 'Price: Low to High' },
     { value: 'price-high', label: 'Price: High to Low' },
 ];
-
-const purposeKeywords = {
-    Health: ['health', 'digestive', 'blood pressure', 'healing', 'wellbeing'],
-    Wealth: ['wealth', 'prosperity', 'abundance', 'money', 'success', 'sri yantra', 'lakshmi', 'financial'],
-    Peace: ['peace', 'calm', 'meditation', 'stress', 'soothing', 'mental peace'],
-    Love: ['love', 'relationship', 'marriage', 'attraction', 'harmony', 'unity'],
-    Protection: ['protection', 'negative energy', 'evil eye', 'shield', 'safety'],
-    Balance: ['balance', 'chakra', 'emotional stability', 'grounding', 'unity'],
-    Courage: ['courage', 'confidence', 'willpower', 'strength', 'fearless', 'power'],
-};
-
-const getProductPurposes = (product) => {
-    const text = `${product.name} ${product.description} ${product.benefits ? product.benefits.join(' ') : ''}`.toLowerCase();
-    const purposes = [];
-    for (const [purpose, keywords] of Object.entries(purposeKeywords)) {
-        if (keywords.some(k => text.includes(k))) {
-            purposes.push(purpose);
-        }
-    }
-    return purposes;
-};
 
 const initialPurposes = [
     { id: 'Health', label: 'Health' },
@@ -77,80 +78,9 @@ const initialPurposes = [
 
 
 
-const beadKeywords = {
-    Rudraksha: ['rudraksha'],
-    Karungali: ['karungali', 'ebony'],
-    Pyrite: ['pyrite'],
-    Sphatik: ['sphatik', 'crystal', 'quartz', 'clear quartz'],
-    'Rose Quartz': ['rose quartz'],
-    'Tiger Eye': ['tiger eye'],
-    Lava: ['lava'],
-    Amethyst: ['amethyst'],
-    Sandalwood: ['sandalwood', 'chandan'],
-    Tulsi: ['tulsi']
-};
-
-const getProductBeads = (product) => {
-    const text = `${product.name} ${product.description} ${product.slug}`.toLowerCase();
-    const beads = [];
-    for (const [bead, keywords] of Object.entries(beadKeywords)) {
-        if (keywords.some(k => text.includes(k))) {
-            beads.push(bead);
-        }
-    }
-    return beads;
-};
-
-const mukhiKeywords = {
-    '1 - Ek': ['1 mukhi', '1-mukhi', 'ek mukhi'],
-    '2 - Do': ['2 mukhi', '2-mukhi', 'do mukhi'],
-    '3 - Teen': ['3 mukhi', '3-mukhi', 'teen mukhi'],
-    '4 - Chaar': ['4 mukhi', '4-mukhi', 'chaar mukhi'],
-    '5 - Paanch': ['5 mukhi', '5-mukhi', 'paanch mukhi', 'panchmukhi'],
-    '6 - Chhey': ['6 mukhi', '6-mukhi', 'chhey mukhi'],
-    '7 - Saat': ['7 mukhi', '7-mukhi', 'saat mukhi'],
-    '8 - Aath': ['8 mukhi', '8-mukhi', 'aath mukhi'],
-    '9 - Nau': ['9 mukhi', '9-mukhi', 'nau mukhi'],
-    '10 - Das': ['10 mukhi', '10-mukhi', 'das mukhi'],
-    '11 - Gyaarah': ['11 mukhi', '11-mukhi', 'gyaarah mukhi'],
-    '12 - Baarah': ['12 mukhi', '12-mukhi', 'baarah mukhi'],
-    '13 - Terah': ['13 mukhi', '13-mukhi', 'terah mukhi'],
-    '14 - Chaudah': ['14 mukhi', '14-mukhi', 'chaudah mukhi'],
-    'Ganesh': ['ganesh rudraksha'],
-    'Gauri Shankar': ['gauri shankar'],
-};
-
-const getProductMukhis = (product) => {
-    const text = `${product.name} ${product.description} ${product.slug} ${product.subCategorySlug || ''}`.toLowerCase();
-    const mukhis = [];
-    for (const [mukhi, keywords] of Object.entries(mukhiKeywords)) {
-        if (keywords.some(k => text.includes(k))) {
-            mukhis.push(mukhi);
-        }
-    }
-    return mukhis;
-};
-
-const platingKeywords = {
-    Silver: ['silver', 'sterling silver'],
-    Gold: ['gold', 'gold plated'],
-    DuoTone: ['duotone', 'two tone', 'dual tone', 'gold and silver'],
-};
-
-const getProductPlatings = (product) => {
-    const text = `${product.name} ${product.description} ${product.slug}`.toLowerCase();
-    const platings = [];
-    for (const [plating, keywords] of Object.entries(platingKeywords)) {
-        if (keywords.some(k => text.includes(k))) {
-            platings.push(plating);
-        }
-    }
-    return platings;
-};
-
-const initialBeads = Object.keys(beadKeywords).map(b => ({ id: b, label: b }));
-const initialMukhis = Object.keys(mukhiKeywords).map(m => ({ id: m, label: m }));
-const initialPlatings = Object.keys(platingKeywords).map(p => ({ id: p, label: p }));
+const initialBeads = ['Rudraksha', 'Karungali', 'Pyrite', 'Sphatik', 'Rose Quartz', 'Tiger Eye', 'Lava', 'Amethyst', 'Sandalwood', 'Tulsi'].map((b) => ({ id: b, label: b }));
+const initialMukhis = ['1 - Ek', '2 - Do', '3 - Teen', '4 - Chaar', '5 - Paanch', '6 - Chhey', '7 - Saat', '8 - Aath', '9 - Nau', '10 - Das', '11 - Gyaarah', '12 - Baarah', '13 - Terah', '14 - Chaudah', 'Ganesh', 'Gauri Shankar'].map((m) => ({ id: m, label: m }));
+const initialPlatings = ['Silver', 'Gold', 'DuoTone'].map((p) => ({ id: p, label: p }));
 
 export default function CategoryPage() {
     const params = useParams();
@@ -159,6 +89,9 @@ export default function CategoryPage() {
     const subCategorySlug = slugArray[1] || '';
 
     const [categories, setCategories] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -184,156 +117,85 @@ export default function CategoryPage() {
         [categories, categorySlug]
     );
 
-    // Filter by Category and Subcategory
-    const baseProducts = useMemo(() => {
-        let filtered = products.filter(p => p.categorySlug === categorySlug);
-
-        if (subCategorySlug) {
-            // Direct match if property exists
-            const directMatch = filtered.filter(p => p.subCategorySlug === subCategorySlug);
-            if (directMatch.length > 0) {
-                filtered = directMatch;
-            } else {
-                // Fallback: search in name/tags if subCategorySlug property missing
-                // e.g. 'rudraksha-mala' -> 'Rudraksha Mala'
-                // '1-mukhi' -> '1 Mukhi'
-                const searchTerms = subCategorySlug.split('-').map(s => s.toLowerCase());
-                filtered = filtered.filter(p => {
-                    const nameLower = p.name.toLowerCase();
-                    // simple check: if all parts of slug are in name? or exact match logic?
-                    // simpler: '1-mukhi' check if '1' and 'mukhi' are in name
-                    return searchTerms.every(term => nameLower.includes(term));
-                });
-            }
-        }
-        return filtered;
-    }, [categorySlug, subCategorySlug]);
-
     const categoryName = subCategorySlug
         ? subCategorySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
         : (category?.name || 'All Products');
 
-    const filteredProducts = useMemo(() => {
-        let result = [...baseProducts];
-
-        result = result.filter(
-            (p) => p.price >= priceRange[0] && p.price <= priceRange[1]
-        );
-
-        if (selectedPurposes.length > 0) {
-            result = result.filter((p) => {
-                const productPurposes = getProductPurposes(p);
-                return selectedPurposes.some(purpose => productPurposes.includes(purpose));
-            });
+    useEffect(() => {
+        if (!categorySlug) {
+            setIsLoading(false);
+            return;
         }
-
-        if (selectedBeads.length > 0) {
-            result = result.filter((p) => {
-                const productBeads = getProductBeads(p);
-                return selectedBeads.some(bead => productBeads.includes(bead));
-            });
-        }
-
-        if (selectedMukhis.length > 0) {
-            result = result.filter((p) => {
-                const productMukhis = getProductMukhis(p);
-                return selectedMukhis.some(mukhi => productMukhis.includes(mukhi));
-            });
-        }
-
-        if (selectedPlatings.length > 0) {
-            result = result.filter((p) => {
-                const productPlatings = getProductPlatings(p);
-                return selectedPlatings.some(plating => productPlatings.includes(plating));
-            });
-        }
-
-        switch (sortBy) {
-            case 'newest':
-                result = result
-                    .filter((p) => p.isNew)
-                    .concat(result.filter((p) => !p.isNew));
-                break;
-            case 'price-low':
-                result.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-high':
-                result.sort((a, b) => b.price - a.price);
-                break;
-            case 'popular':
-            default:
-                result = result
-                    .filter((p) => p.isBestseller)
-                    .concat(result.filter((p) => !p.isBestseller));
-                break;
-        }
-
-        return result;
-    }, [baseProducts, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy]);
+        setIsLoading(true);
+        const params = {
+            categorySlug,
+            subCategorySlug: subCategorySlug || undefined,
+            minPrice: priceRange[0] || undefined,
+            maxPrice: priceRange[1] < 500000 ? priceRange[1] : undefined,
+            purposes: selectedPurposes.length ? selectedPurposes.join(',') : undefined,
+            beads: selectedBeads.length ? selectedBeads.join(',') : undefined,
+            mukhis: selectedMukhis.length ? selectedMukhis.join(',') : undefined,
+            platings: selectedPlatings.length ? selectedPlatings.join(',') : undefined,
+            sort: sortBy,
+            page: currentPage,
+            limit: itemsPerPage,
+        };
+        getProducts(params)
+            .then((res) => {
+                const list = (res?.products || []).map(mapProductImages);
+                setProducts(list);
+                setTotal(res?.total ?? list.length);
+                setTotalPages(res?.totalPages ?? 1);
+            })
+            .catch(() => {
+                setProducts([]);
+                setTotal(0);
+                setTotalPages(0);
+            })
+            .finally(() => setIsLoading(false));
+    }, [categorySlug, subCategorySlug, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy, currentPage]);
 
     const availablePurposes = useMemo(() => {
         const counts = {};
-        initialPurposes.forEach(p => counts[p.id] = 0);
-        baseProducts.forEach(p => {
-             const pPurposes = getProductPurposes(p);
-             pPurposes.forEach(purpose => {
-                 if (counts[purpose] !== undefined) {
-                     counts[purpose]++;
-                 }
-             });
+        initialPurposes.forEach((p) => (counts[p.id] = 0));
+        products.forEach((p) => {
+            const arr = p.filterAttributes?.purposes || [];
+            arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
         });
-        return initialPurposes.map(p => ({ ...p, count: counts[p.id] || 0 }));
-    }, [baseProducts]);
+        return initialPurposes.map((p) => ({ ...p, count: counts[p.id] || 0 }));
+    }, [products]);
 
     const availableBeads = useMemo(() => {
         const counts = {};
-        initialBeads.forEach(b => counts[b.id] = 0);
-        baseProducts.forEach(p => {
-             const pBeads = getProductBeads(p);
-             pBeads.forEach(bead => {
-                 if (counts[bead] !== undefined) {
-                     counts[bead]++;
-                 }
-             });
+        initialBeads.forEach((b) => (counts[b.id] = 0));
+        products.forEach((p) => {
+            const arr = p.filterAttributes?.beads || [];
+            arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
         });
-        return initialBeads.map(b => ({ ...b, count: counts[b.id] || 0 })).filter(b => b.count > 0);
-    }, [baseProducts]);
+        return initialBeads.map((b) => ({ ...b, count: counts[b.id] || 0 })).filter((b) => b.count > 0);
+    }, [products]);
 
     const availableMukhis = useMemo(() => {
         const counts = {};
-        initialMukhis.forEach(m => counts[m.id] = 0);
-        baseProducts.forEach(p => {
-             const pMukhis = getProductMukhis(p);
-             pMukhis.forEach(mukhi => {
-                 if (counts[mukhi] !== undefined) {
-                     counts[mukhi]++;
-                 }
-             });
+        initialMukhis.forEach((m) => (counts[m.id] = 0));
+        products.forEach((p) => {
+            const arr = p.filterAttributes?.mukhis || [];
+            arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
         });
-        return initialMukhis.map(m => ({ ...m, count: counts[m.id] || 0 })).filter(m => m.count > 0);
-    }, [baseProducts]);
+        return initialMukhis.map((m) => ({ ...m, count: counts[m.id] || 0 })).filter((m) => m.count > 0);
+    }, [products]);
 
     const availablePlatings = useMemo(() => {
         const counts = {};
-        initialPlatings.forEach(p => counts[p.id] = 0);
-        baseProducts.forEach(p => {
-             const pPlatings = getProductPlatings(p);
-             pPlatings.forEach(plating => {
-                 if (counts[plating] !== undefined) {
-                     counts[plating]++;
-                 }
-             });
+        initialPlatings.forEach((p) => (counts[p.id] = 0));
+        products.forEach((p) => {
+            const arr = p.filterAttributes?.platings || [];
+            arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
         });
-        return initialPlatings.map(p => ({ ...p, count: counts[p.id] || 0 }));
-    }, [baseProducts]);
+        return initialPlatings.map((p) => ({ ...p, count: counts[p.id] || 0 }));
+    }, [products]);
 
-    // Pagination Logic
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-
-    const paginatedProducts = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredProducts, currentPage]);
+    const paginatedProducts = products;
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -541,18 +403,14 @@ export default function CategoryPage() {
                                             className="w-full mt-4"
                                             onClick={() => setIsFilterOpen(false)}
                                         >
-                                            Show {filteredProducts.length} Products
+                                            Show {total} Products
                                         </Button>
                                     </DialogContent>
                                 </Dialog>
 
                                 <p className="text-sm text-muted-foreground hidden sm:block">
-                                    <span className="font-medium text-foreground">
-                                        {filteredProducts.length}
-                                    </span>{' '}
-                                    products
+                                    <span className="font-medium text-foreground">{total}</span> products
                                 </p>
-
                                 <Select value={sortBy} onValueChange={setSortBy}>
                                     <SelectTrigger className="w-full sm:w-[180px] min-w-0">
                                         <SlidersHorizontal className="w-4 h-4 mr-2 shrink-0" />
@@ -627,7 +485,7 @@ export default function CategoryPage() {
                                     />
                                 ))}
                             </div>
-                        ) : filteredProducts.length > 0 ? (
+                        ) : products.length > 0 ? (
                             <motion.div
                                 layout
                                 className={
@@ -664,7 +522,7 @@ export default function CategoryPage() {
                             </div>
                         )}
 
-                        {!isLoading && filteredProducts.length > 0 && totalPages > 1 && (
+                        {!isLoading && products.length > 0 && totalPages > 1 && (
                             <div className="flex justify-center items-center gap-2 mt-12">
                                 <Button
                                     variant="outline"

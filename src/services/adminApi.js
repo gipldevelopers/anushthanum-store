@@ -104,6 +104,14 @@ export const uploadApi = {
       .then(handleResponse)
       .catch(handleError);
   },
+  uploadProductImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return adminApi
+      .post('/admin/upload/product-image', formData)
+      .then(handleResponse)
+      .catch(handleError);
+  },
 };
 
 export const mediaApi = {
