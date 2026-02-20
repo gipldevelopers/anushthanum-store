@@ -87,6 +87,7 @@ export default function CategoryPage() {
     const slugArray = params?.slug || [];
     const categorySlug = slugArray[0] || '';
     const subCategorySlug = slugArray[1] || '';
+    const subSubCategorySlug = slugArray[2] || '';
 
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
@@ -117,9 +118,20 @@ export default function CategoryPage() {
         [categories, categorySlug]
     );
 
-    const categoryName = subCategorySlug
-        ? subCategorySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-        : (category?.name || 'All Products');
+    const currentSub = useMemo(
+        () => category?.subCategories?.find((s) => s.slug === subCategorySlug),
+        [category, subCategorySlug]
+    );
+    const subSubCategories = currentSub?.subSubCategories || [];
+    const currentSubSub = useMemo(
+        () => subSubCategories.find((s) => s.slug === subSubCategorySlug),
+        [subSubCategories, subSubCategorySlug]
+    );
+    const categoryName = subSubCategorySlug
+        ? (currentSubSub?.name || subSubCategorySlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()))
+        : subCategorySlug
+            ? (currentSub?.name || subCategorySlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()))
+            : (category?.name || 'All Products');
 
     useEffect(() => {
         if (!categorySlug) {
@@ -130,6 +142,7 @@ export default function CategoryPage() {
         const params = {
             categorySlug,
             subCategorySlug: subCategorySlug || undefined,
+            subSubCategorySlug: subSubCategorySlug || undefined,
             minPrice: priceRange[0] || undefined,
             maxPrice: priceRange[1] < 500000 ? priceRange[1] : undefined,
             purposes: selectedPurposes.length ? selectedPurposes.join(',') : undefined,
@@ -153,7 +166,7 @@ export default function CategoryPage() {
                 setTotalPages(0);
             })
             .finally(() => setIsLoading(false));
-    }, [categorySlug, subCategorySlug, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy, currentPage]);
+    }, [categorySlug, subCategorySlug, subSubCategorySlug, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy, currentPage]);
 
     const availablePurposes = useMemo(() => {
         const counts = {};
@@ -206,7 +219,7 @@ export default function CategoryPage() {
     // Reset pagination when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [categorySlug, subCategorySlug, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy]);
+    }, [categorySlug, subCategorySlug, subSubCategorySlug, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy]);
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
@@ -275,7 +288,17 @@ export default function CategoryPage() {
                     {subCategorySlug && (
                         <>
                             <ChevronRight className="w-3.5 h-3.5" />
-                            <span className="text-foreground font-medium capitalize">{subCategorySlug.replace(/-/g, ' ')}</span>
+                            <Link href={`/category/${categorySlug}/${subCategorySlug}`} className={`hover:text-primary transition-colors ${!subSubCategorySlug ? 'text-foreground font-medium' : ''}`}>
+                                {currentSub?.name || subCategorySlug.replace(/-/g, ' ')}
+                            </Link>
+                            {subSubCategorySlug && (
+                                <>
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                    <span className="text-foreground font-medium">
+                                        {currentSubSub?.name || subSubCategorySlug.replace(/-/g, ' ')}
+                                    </span>
+                                </>
+                            )}
                         </>
                     )}
                 </nav>
@@ -305,23 +328,47 @@ export default function CategoryPage() {
                         <div className="sticky top-28 space-y-6">
                             {subCategories.length > 0 && (
                                 <div className="rounded-lg border border-border p-4">
-                                    <h3 className="font-semibold mb-3">Subcategories</h3>
+                                    <h3 className="font-semibold mb-3">
+                                        {subCategorySlug ? (currentSub?.name || 'Sub-category') : 'Subcategories'}
+                                    </h3>
                                     <nav className="space-y-1">
-                                        <Link
-                                            href={`/category/${categorySlug}`}
-                                            className={`block py-1.5 px-2 rounded text-sm transition-colors ${!subCategorySlug ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
-                                        >
-                                            All {category?.name || categorySlug}
-                                        </Link>
-                                        {subCategories.map((sub) => (
-                                            <Link
-                                                key={sub.id}
-                                                href={`/category/${categorySlug}/${sub.slug}`}
-                                                className={`block py-1.5 px-2 rounded text-sm transition-colors ${subCategorySlug === sub.slug ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
-                                            >
-                                                {sub.name}
-                                            </Link>
-                                        ))}
+                                        {!subCategorySlug ? (
+                                            <>
+                                                <Link
+                                                    href={`/category/${categorySlug}`}
+                                                    className="block py-1.5 px-2 rounded text-sm transition-colors bg-primary/10 text-primary font-medium"
+                                                >
+                                                    All {category?.name || categorySlug}
+                                                </Link>
+                                                {subCategories.map((sub) => (
+                                                    <Link
+                                                        key={sub.id}
+                                                        href={`/category/${categorySlug}/${sub.slug}`}
+                                                        className="block py-1.5 px-2 rounded text-sm transition-colors text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                                    >
+                                                        {sub.name}
+                                                    </Link>
+                                                ))}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Link
+                                                    href={`/category/${categorySlug}/${subCategorySlug}`}
+                                                    className={`block py-1.5 px-2 rounded text-sm transition-colors ${!subSubCategorySlug ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+                                                >
+                                                    All {currentSub?.name || subCategorySlug.replace(/-/g, ' ')}
+                                                </Link>
+                                                {subSubCategories.map((s) => (
+                                                    <Link
+                                                        key={s.id}
+                                                        href={`/category/${categorySlug}/${subCategorySlug}/${s.slug}`}
+                                                        className={`block py-1.5 px-2 rounded text-sm transition-colors ${subSubCategorySlug === s.slug ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}
+                                                    >
+                                                        {s.name}
+                                                    </Link>
+                                                ))}
+                                            </>
+                                        )}
                                     </nav>
                                 </div>
                             )}

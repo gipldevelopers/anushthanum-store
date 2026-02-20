@@ -23,6 +23,9 @@ function imageSrc(url) {
   return API_ORIGIN ? `${API_ORIGIN}${url}` : url;
 }
 
+const generateSlug = (name) =>
+  String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '';
+
 export default function EditCategoryPage() {
   const router = useRouter();
   const params = useParams();
@@ -109,7 +112,7 @@ export default function EditCategoryPage() {
     try {
       await categoriesApi.update(id, {
         name: formData.name.trim(),
-        slug: formData.slug?.trim(),
+        slug: generateSlug(formData.name),
         description: formData.description?.trim() || null,
         image: formData.image?.trim() || null,
         type: formData.type,
@@ -157,7 +160,7 @@ export default function EditCategoryPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value, slug: generateSlug(e.target.value) }))}
                   placeholder="e.g. Rudraksha"
                 />
               </div>
@@ -165,9 +168,10 @@ export default function EditCategoryPage() {
                 <Label htmlFor="slug">Slug</Label>
                 <Input
                   id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                  className="bg-muted"
+                  value={generateSlug(formData.name) || formData.slug}
+                  disabled
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
                 />
               </div>
             </div>

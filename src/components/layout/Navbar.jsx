@@ -55,16 +55,26 @@ const staticNavItems = [
   },
 ];
 
-/** Build nav items from API categories (main + subcategories) */
+/** Build nav items from API categories (main + subcategories + sub-sub-categories) */
 function buildNavItemsFromCategories(categories) {
   if (!Array.isArray(categories) || categories.length === 0) return staticNavItems;
   const categoryItems = categories.map((cat) => {
     const subs = cat.subCategories || [];
     const dropdown = subs.length > 0
-      ? subs.map((sub) => ({
-          label: sub.name,
-          href: `/category/${cat.slug}/${sub.slug}`,
-        }))
+      ? subs.map((sub) => {
+          const subSubs = sub.subSubCategories || [];
+          const subDropdown = subSubs.length > 0
+            ? subSubs.map((ss) => ({
+                label: ss.name,
+                href: `/category/${cat.slug}/${sub.slug}/${ss.slug}`,
+              }))
+            : undefined;
+          return {
+            label: sub.name,
+            href: `/category/${cat.slug}/${sub.slug}`,
+            ...(subDropdown && subDropdown.length > 0 && { dropdown: subDropdown }),
+          };
+        })
       : undefined;
     return {
       label: cat.name,
@@ -596,9 +606,9 @@ export default function Navbar() {
                               <ChevronRight className="w-3.5 h-3.5" />
                             )}
                           </Link>
-                          {/* Nested Dropdown */}
+                          {/* Nested Dropdown (sub-sub-categories) */}
                           {subItem.dropdown && (
-                            <div className="absolute left-full top-0 ml-0.5 w-60 py-1.5 bg-background rounded-lg shadow-lg border border-border hidden group-hover/sub:block max-h-[80vh] overflow-y-auto">
+                            <div className="absolute left-full top-0 -ml-1 pl-1 w-60 py-1.5 bg-background rounded-lg shadow-lg border border-border hidden group-hover/sub:block max-h-[80vh] overflow-y-auto z-[60]">
                               {subItem.dropdown.map((nestedItem) => (
                                 <Link
                                   key={nestedItem.label}
@@ -777,12 +787,12 @@ export default function Navbar() {
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => toggleItem(subItem.label)}
+                                        onClick={() => toggleItem(`${item.label}-${subItem.label}`)}
                                         className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                        aria-label={expandedItems[subItem.label] ? 'Collapse' : 'Expand'}
+                                        aria-label={expandedItems[`${item.label}-${subItem.label}`] ? 'Collapse' : 'Expand'}
                                       >
                                         <ChevronRight
-                                          className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedItems[subItem.label] ? 'rotate-90' : ''
+                                          className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedItems[`${item.label}-${subItem.label}`] ? 'rotate-90' : ''
                                             }`}
                                         />
                                       </Button>
@@ -790,7 +800,7 @@ export default function Navbar() {
                                   </div>
                                   {/* Nested Mobile Dropdown */}
                                   <AnimatePresence>
-                                    {subItem.dropdown && expandedItems[subItem.label] && (
+                                    {subItem.dropdown && expandedItems[`${item.label}-${subItem.label}`] && (
                                       <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}

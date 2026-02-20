@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Loader2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { productsApi, categoriesApi, subCategoriesApi, uploadApi } from '@/services/adminApi';
+import { productsApi, categoriesApi, subCategoriesApi, subSubCategoriesApi, uploadApi } from '@/services/adminApi';
 
 const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
@@ -30,6 +30,8 @@ const PLATING_OPTIONS = ['Silver', 'Gold', 'DuoTone'];
 
 const textToArray = (s) => (typeof s === 'string' ? s.split('\n').map((x) => x.trim()).filter(Boolean) : Array.isArray(s) ? s : []);
 const arrayToText = (arr) => (Array.isArray(arr) ? arr.join('\n') : '');
+const generateSlug = (n) =>
+  String(n || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -42,11 +44,13 @@ export default function EditProductPage() {
   const fileInputRef = useRef(null);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
+  const [subSubCategories, setSubSubCategories] = useState([]);
   const [form, setForm] = useState({
     name: '',
     slug: '',
     categoryId: '',
     subCategoryId: '',
+    subSubCategoryId: '',
     price: '',
     discountPrice: '',
     stock: 0,
@@ -81,6 +85,7 @@ export default function EditProductPage() {
           slug: p.slug || '',
           categoryId: String(p.categoryId || ''),
           subCategoryId: p.subCategoryId ? String(p.subCategoryId) : '',
+    subSubCategoryId: p.subSubCategoryId ? String(p.subSubCategoryId) : '',
           price: p.price != null ? String(p.price) : '',
           discountPrice: p.discountPrice != null ? String(p.discountPrice) : '',
           stock: p.stock ?? 0,
@@ -117,10 +122,19 @@ export default function EditProductPage() {
   useEffect(() => {
     if (!form.categoryId) {
       setSubCategories([]);
+      setSubSubCategories([]);
       return;
     }
     subCategoriesApi.getByCategory(form.categoryId).then((d) => setSubCategories(d?.subCategories ?? [])).catch(() => setSubCategories([]));
   }, [form.categoryId]);
+
+  useEffect(() => {
+    if (!form.subCategoryId) {
+      setSubSubCategories([]);
+      return;
+    }
+    subSubCategoriesApi.getBySubCategory(form.subCategoryId).then((d) => setSubSubCategories(d?.subSubCategories ?? [])).catch(() => setSubSubCategories([]));
+  }, [form.subCategoryId]);
 
   const onName = (name) => setForm((p) => ({ ...p, name }));
 
@@ -176,9 +190,10 @@ export default function EditProductPage() {
     try {
       await productsApi.update(id, {
         name: form.name.trim(),
-        slug: form.slug?.trim() || form.slug,
+        slug: generateSlug(form.name),
         categoryId: Number(form.categoryId),
         subCategoryId: form.subCategoryId ? Number(form.subCategoryId) : null,
+        subSubCategoryId: form.subSubCategoryId ? Number(form.subSubCategoryId) : null,
         price: Number(form.price) || 0,
         discountPrice: form.discountPrice ? Number(form.discountPrice) : null,
         stock: Number(form.stock) ?? 0,
@@ -241,7 +256,12 @@ export default function EditProductPage() {
               </div>
               <div className="space-y-2">
                 <Label>Slug</Label>
-                <Input value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))} />
+                <Input
+                  value={generateSlug(form.name) || form.slug}
+                  disabled
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
+                />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -263,6 +283,20 @@ export default function EditProductPage() {
                   <SelectContent>
                     <SelectItem value="__none__">—</SelectItem>
                     {subCategories.map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Sub-Sub-Category</Label>
+                <Select value={form.subSubCategoryId || '__none__'} onValueChange={(v) => setForm((p) => ({ ...p, subSubCategoryId: v === '__none__' ? '' : v }))} disabled={!form.subCategoryId}>
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {subSubCategories.map((s) => (
                       <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>

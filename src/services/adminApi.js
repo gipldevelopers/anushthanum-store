@@ -50,6 +50,20 @@ export const subCategoriesApi = {
     adminApi.delete(`/admin/subcategories/${id}`).then(handleResponse).catch(handleError),
 };
 
+export const subSubCategoriesApi = {
+  getAll: (params) =>
+    adminApi.get('/admin/subsubcategories', { params }).then(handleResponse).catch(handleError),
+  getBySubCategory: (subCategoryId) =>
+    adminApi.get(`/admin/subcategories/${subCategoryId}/subsubcategories`).then(handleResponse).catch(handleError),
+  getById: (id) => adminApi.get(`/admin/subsubcategories/${id}`).then(handleResponse).catch(handleError),
+  create: (data) =>
+    adminApi.post('/admin/subsubcategories', data).then(handleResponse).catch(handleError),
+  update: (id, data) =>
+    adminApi.put(`/admin/subsubcategories/${id}`, data).then(handleResponse).catch(handleError),
+  delete: (id) =>
+    adminApi.delete(`/admin/subsubcategories/${id}`).then(handleResponse).catch(handleError),
+};
+
 export const productsApi = {
   getAll: (params) =>
     adminApi.get('/admin/products', { params }).then(handleResponse).catch(handleError),

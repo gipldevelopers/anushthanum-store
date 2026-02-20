@@ -571,7 +571,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getProductBySlug, products } from '@/data/products';
+import { getProductBySlug, getProducts } from '@/services/productApi';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useRecentlyViewed } from '@/context/RecentlyViewedContext';
@@ -581,12 +581,34 @@ import ImageLightbox from '@/components/ui/ImageLightbox';
 import StickyAddToCart from '@/components/ui/StickyAddToCart';
 import DeliveryEstimate from '@/components/ui/DeliveryEstimate';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
+
+const UPLOAD_BASE = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_SERVER_URL || process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || '')
+  : '';
+
+function toFullImageUrl(path) {
+  if (!path) return '';
+  if (typeof path === 'string' && path.startsWith('http')) return path;
+  return path.startsWith('/') ? `${UPLOAD_BASE}${path}` : `${UPLOAD_BASE}/${path}`;
+}
+
+function mapProductImages(p) {
+  if (!p) return null;
+  const imgs = Array.isArray(p.images) && p.images.length
+    ? p.images.map((img) => (typeof img === 'string' ? toFullImageUrl(img) : img)).filter(Boolean)
+    : p.thumbnail ? [toFullImageUrl(p.thumbnail)] : ['/placeholder.svg'];
+  const stock = Number(p.stock ?? 0);
+  return { ...p, images: imgs.length ? imgs : ['/placeholder.svg'], stock, inStock: stock > 0 };
+}
 
 export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params?.slug ?? '';
-  const product = getProductBySlug(slug);
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariants, setSelectedVariants] = useState({});
@@ -597,7 +619,40 @@ export default function ProductPage() {
 
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { addToRecentlyViewed } = useRecentlyViewed();
+  const { addToRecentlyViewed, items: recentlyViewedItems } = useRecentlyViewed();
+
+  useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    getProductBySlug(slug)
+      .then((res) => {
+        const p = res?.product;
+        if (p) {
+          const mapped = mapProductImages(p);
+          setProduct(mapped);
+          addToRecentlyViewed(mapped);
+          if (p.categorySlug) {
+            getProducts({ categorySlug: p.categorySlug, limit: 5 })
+              .then((r) => {
+                const list = r?.products ?? [];
+                const mappedList = list
+                  .filter((x) => x.id !== p.id)
+                  .slice(0, 4)
+                  .map((x) => mapProductImages(x));
+                setRelatedProducts(mappedList);
+              })
+              .catch(() => setRelatedProducts([]));
+          }
+        } else {
+          setProduct(null);
+        }
+      })
+      .catch(() => setProduct(null))
+      .finally(() => setLoading(false));
+  }, [slug, addToRecentlyViewed]);
 
   // Check if mobile
   useEffect(() => {
@@ -609,12 +664,6 @@ export default function ProductPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  useEffect(() => {
-    if (product) {
-      addToRecentlyViewed(product);
-    }
-  }, [product?.id, addToRecentlyViewed]);
 
   // Intersection observer for sticky bar
   useEffect(() => {
@@ -631,6 +680,14 @@ export default function ProductPage() {
 
     return () => observer.disconnect();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="container px-4 py-20 flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -659,9 +716,11 @@ export default function ProductPage() {
     }).format(price);
   };
 
-  const relatedProducts = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
+  const recentItems = (recentlyViewedItems ?? [])
+    .filter((p) => p?.id && p.id !== product?.id)
+    .slice(0, 4)
+    .map((p) => mapProductImages(p))
+    .filter(Boolean);
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedVariants);
@@ -902,10 +961,12 @@ export default function ProductPage() {
                   <Check className="w-4 h-4 text-accent" />
                   100% Authentic & Energized
                 </h4>
-                <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                  {product.authenticity.certificate} • Origin:{' '}
-                  {product.authenticity.origin}
-                </p>
+                {product.authenticity && (
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                    {product.authenticity.certificate && `${product.authenticity.certificate} • `}
+                    Origin: {product.authenticity.origin ?? 'India'}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1268,21 +1329,23 @@ export default function ProductPage() {
         )}
 
         {/* Recently Viewed Section */}
-        <section className="mt-12 md:mt-16">
-          <h3 className="text-xl sm:text-2xl font-serif font-bold mb-6 md:mb-8">
-            Recently Viewed
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
-            {products.slice(0, 4).map((productItem, index) => (
-              <ProductCard
-                key={productItem.id}
-                product={productItem}
-                index={index}
-                compact={isMobile}
-              />
-            ))}
-          </div>
-        </section>
+        {recentItems.length > 0 && (
+          <section className="mt-12 md:mt-16">
+            <h3 className="text-xl sm:text-2xl font-serif font-bold mb-6 md:mb-8">
+              Recently Viewed
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+              {recentItems.map((productItem, index) => (
+                <ProductCard
+                  key={productItem.id}
+                  product={productItem}
+                  index={index}
+                  compact={isMobile}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Image Lightbox */}

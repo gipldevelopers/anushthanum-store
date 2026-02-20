@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Loader2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { productsApi, categoriesApi, subCategoriesApi, uploadApi } from '@/services/adminApi';
+import { productsApi, categoriesApi, subCategoriesApi, subSubCategoriesApi, uploadApi } from '@/services/adminApi';
 
 const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
@@ -24,11 +24,7 @@ function imageSrc(url) {
 }
 
 const generateSlug = (n) =>
-  String(n)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+  String(n || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '';
 
 const PURPOSE_OPTIONS = ['Health', 'Wealth', 'Peace', 'Love', 'Protection', 'Balance', 'Courage'];
 const BEAD_OPTIONS = ['Rudraksha', 'Karungali', 'Pyrite', 'Sphatik', 'Rose Quartz', 'Tiger Eye', 'Lava', 'Amethyst', 'Sandalwood', 'Tulsi'];
@@ -49,6 +45,7 @@ export default function NewProductPage() {
     slug: '',
     categoryId: '',
     subCategoryId: '',
+    subSubCategoryId: '',
     price: '',
     discountPrice: '',
     stock: 0,
@@ -73,17 +70,30 @@ export default function NewProductPage() {
     categoriesApi.getAll({ type: 'main' }).then((d) => setCategories(d?.categories ?? [])).catch(() => setCategories([]));
   }, []);
 
+  const [subSubCategories, setSubSubCategories] = useState([]);
+
   useEffect(() => {
     if (!form.categoryId) {
       setSubCategories([]);
-      setForm((p) => ({ ...p, subCategoryId: '' }));
+      setSubSubCategories([]);
+      setForm((p) => ({ ...p, subCategoryId: '', subSubCategoryId: '' }));
       return;
     }
     subCategoriesApi.getByCategory(form.categoryId).then((d) => setSubCategories(d?.subCategories ?? [])).catch(() => setSubCategories([]));
-    setForm((p) => ({ ...p, subCategoryId: '' }));
+    setForm((p) => ({ ...p, subCategoryId: '', subSubCategoryId: '' }));
   }, [form.categoryId]);
 
-  const onName = (name) => setForm((p) => ({ ...p, name, slug: p.slug || generateSlug(name) }));
+  useEffect(() => {
+    if (!form.subCategoryId) {
+      setSubSubCategories([]);
+      setForm((p) => ({ ...p, subSubCategoryId: '' }));
+      return;
+    }
+    subSubCategoriesApi.getBySubCategory(form.subCategoryId).then((d) => setSubSubCategories(d?.subSubCategories ?? [])).catch(() => setSubSubCategories([]));
+    setForm((p) => ({ ...p, subSubCategoryId: '' }));
+  }, [form.subCategoryId]);
+
+  const onName = (name) => setForm((p) => ({ ...p, name, slug: generateSlug(name) }));
 
   const handleImageUpload = async (e) => {
     const file = e.target?.files?.[0];
@@ -137,9 +147,10 @@ export default function NewProductPage() {
     try {
       await productsApi.create({
         name: form.name.trim(),
-        slug: form.slug?.trim() || generateSlug(form.name),
+        slug: generateSlug(form.name),
         categoryId: Number(form.categoryId),
         subCategoryId: form.subCategoryId ? Number(form.subCategoryId) : null,
+        subSubCategoryId: form.subSubCategoryId ? Number(form.subSubCategoryId) : null,
         price: Number(form.price) || 0,
         discountPrice: form.discountPrice ? Number(form.discountPrice) : null,
         stock: Number(form.stock) ?? 0,
@@ -199,8 +210,10 @@ export default function NewProductPage() {
               <div className="space-y-2">
                 <Label>Slug</Label>
                 <Input
-                  value={form.slug}
-                  onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+                  value={generateSlug(form.name) || form.slug}
+                  disabled
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
                   placeholder="auto-generated from name"
                 />
               </div>
@@ -228,6 +241,24 @@ export default function NewProductPage() {
                   <SelectContent>
                     <SelectItem value="__none__">—</SelectItem>
                     {subCategories.map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Sub-Sub-Category (e.g. 1 Mukhi, 2 Mukhi)</Label>
+                <Select
+                  value={form.subSubCategoryId || '__none__'}
+                  onValueChange={(v) => setForm((p) => ({ ...p, subSubCategoryId: v === '__none__' ? '' : v }))}
+                  disabled={!form.subCategoryId}
+                >
+                  <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {subSubCategories.map((s) => (
                       <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>

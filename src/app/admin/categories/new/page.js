@@ -24,11 +24,7 @@ function imageSrc(url) {
 }
 
 const generateSlug = (name) =>
-  String(name)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+  String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '';
 
 export default function NewCategoryPage() {
   const router = useRouter();
@@ -46,7 +42,7 @@ export default function NewCategoryPage() {
   const fileInputRef = useRef(null);
 
   const handleNameChange = (name) => {
-    setFormData((prev) => ({ ...prev, name, slug: prev.slug || generateSlug(name) }));
+    setFormData((prev) => ({ ...prev, name, slug: generateSlug(name) }));
   };
 
   const handleImageUpload = async (e) => {
@@ -88,7 +84,7 @@ export default function NewCategoryPage() {
     try {
       const payload = {
         name: formData.name.trim(),
-        slug: formData.slug?.trim() || generateSlug(formData.name),
+        slug: generateSlug(formData.name),
         description: formData.description?.trim() || null,
         image: formData.image?.trim() || null,
         type: formData.type,
@@ -137,10 +133,11 @@ export default function NewCategoryPage() {
                 <Label htmlFor="slug">Slug</Label>
                 <Input
                   id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                  placeholder="Auto from name"
-                  className="bg-muted"
+                  value={generateSlug(formData.name) || formData.slug}
+                  disabled
+                  readOnly
+                  placeholder="Auto-generated from name"
+                  className="bg-muted cursor-not-allowed"
                 />
               </div>
             </div>

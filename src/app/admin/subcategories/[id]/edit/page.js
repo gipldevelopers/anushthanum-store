@@ -17,6 +17,9 @@ import { subCategoriesApi, categoriesApi, uploadApi } from '@/services/adminApi'
 const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
   : '';
+const generateSlug = (n) =>
+  String(n || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '';
+
 function imageSrc(url) {
   if (!url) return null;
   if (url.startsWith('http') || url.startsWith('//')) return url;
@@ -118,7 +121,7 @@ export default function EditSubCategoryPage() {
       await subCategoriesApi.update(id, {
         parentId: formData.parentId ? Number(formData.parentId) : undefined,
         name: formData.name.trim(),
-        slug: formData.slug?.trim(),
+        slug: generateSlug(formData.name),
         description: formData.description?.trim() || null,
         image: formData.image?.trim() || null,
         status: formData.status,
@@ -176,16 +179,17 @@ export default function EditSubCategoryPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value, slug: generateSlug(e.target.value) }))}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="slug">Slug</Label>
                 <Input
                   id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                  className="bg-muted"
+                  value={generateSlug(formData.name) || formData.slug}
+                  disabled
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
                 />
               </div>
             </div>

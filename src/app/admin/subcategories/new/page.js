@@ -24,11 +24,7 @@ function imageSrc(url) {
 }
 
 const generateSlug = (n) =>
-  String(n)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+  String(n || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '';
 
 export default function NewSubCategoryPage() {
   const router = useRouter();
@@ -82,7 +78,7 @@ export default function NewSubCategoryPage() {
   }, []);
 
   const onName = (name) =>
-    setForm((p) => ({ ...p, name, slug: p.slug || generateSlug(name) }));
+    setForm((p) => ({ ...p, name, slug: generateSlug(name) }));
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -95,7 +91,7 @@ export default function NewSubCategoryPage() {
       await subCategoriesApi.create({
         parentId: Number(form.parentId),
         name: form.name.trim(),
-        slug: form.slug?.trim() || generateSlug(form.name),
+        slug: generateSlug(form.name),
         description: form.description?.trim() || null,
         image: form.image?.trim() || null,
         status: form.status,
@@ -156,9 +152,10 @@ export default function NewSubCategoryPage() {
                 <Label htmlFor="slug">Slug</Label>
                 <Input
                   id="slug"
-                  value={form.slug}
-                  onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
-                  className="bg-muted"
+                  value={generateSlug(form.name) || form.slug}
+                  disabled
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
                 />
               </div>
             </div>
