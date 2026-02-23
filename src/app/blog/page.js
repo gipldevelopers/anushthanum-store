@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -23,14 +23,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  blogPosts,
-  blogCategories,
-  getMustReadBlogs,
-  getPopularBlogs,
-  getFeaturedBlogs,
-  getBlogsByCategory,
-} from '@/data/blogs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { blogApi } from '@/services/blogApi';
+import { imageSrc } from '@/lib/utils';
+import { blogCategories } from '@/data/blogs';
 
 const categoryIcons = {
   BookOpen,
@@ -48,10 +44,20 @@ function CategoryIcon({ name, className = "w-4 h-4" }) {
   return Icon ? <Icon className={className} /> : null;
 }
 
-function BlogHero() {
-  const featuredPosts = getFeaturedBlogs();
-  const featuredPost = featuredPosts[0];
+function LoadingCard() {
+  return (
+    <div className="bg-card rounded-xl overflow-hidden border border-border">
+      <Skeleton className="aspect-[16/10] w-full" />
+      <div className="p-5 space-y-3">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+    </div>
+  );
+}
 
+function BlogHero({ featuredPost }) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-12 md:py-20">
       <div className="absolute inset-0 sacred-pattern opacity-5" />
@@ -80,20 +86,6 @@ function BlogHero() {
                 className="pl-12 h-12 bg-background border-border"
               />
             </div>
-            <div className="flex gap-8 mt-8">
-              <div>
-                <p className="text-2xl font-bold text-primary">{blogPosts.length}+</p>
-                <p className="text-sm text-muted-foreground">Articles</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-primary">{blogCategories.length - 1}</p>
-                <p className="text-sm text-muted-foreground">Categories</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-primary">50K+</p>
-                <p className="text-sm text-muted-foreground">Readers</p>
-              </div>
-            </div>
           </motion.div>
           {featuredPost && (
             <motion.article
@@ -103,15 +95,15 @@ function BlogHero() {
               className="relative group"
             >
               <Link href={`/blog/${featuredPost.slug}`}>
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
                   <img
-                    src={featuredPost.image}
+                    src={imageSrc(featuredPost.image) || '/images/placeholder.jpg'}
                     alt={featuredPost.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <Badge className="bg-primary text-primary-foreground mb-3">Featured</Badge>
+                    <Badge className="bg-primary text-primary-foreground mb-3 border-none">Featured</Badge>
                     <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-2 line-clamp-2">
                       {featuredPost.title}
                     </h2>
@@ -121,16 +113,14 @@ function BlogHero() {
                     <div className="flex items-center gap-4 text-white/70 text-xs">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
-                        {new Date(featuredPost.date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
+                        {featuredPost.date || (featuredPost.publishedAt ? new Date(featuredPost.publishedAt).toLocaleDateString() : '')}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {featuredPost.readTime}
-                      </span>
+                      {featuredPost.readTime && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          {featuredPost.readTime}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -168,112 +158,45 @@ function CategoryNav({ activeCategory, onCategoryChange }) {
   );
 }
 
-function BlogCard({ post, variant = 'default' }) {
-  const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+function BlogCard({ post, index }) {
   const categoryInfo = blogCategories.find((c) => c.id === post.category);
-
-  if (variant === 'horizontal') {
-    return (
-      <motion.article
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="group flex gap-4 p-4 rounded-xl bg-card border border-border hover:shadow-md transition-shadow"
-      >
-        <Link href={`/blog/${post.slug}`} className="shrink-0">
-          <div className="w-28 h-28 rounded-lg overflow-hidden">
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          </div>
-        </Link>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <Badge variant="secondary" className="text-[10px]">
-              {categoryInfo?.name}
-            </Badge>
-          </div>
-          <Link href={`/blog/${post.slug}`}>
-            <h3 className="font-serif font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors mb-1">
-              {post.title}
-            </h3>
-          </Link>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{formattedDate}</span>
-            <span className="flex items-center gap-1">
-              <Eye className="w-3 h-3" />
-              {((post.views || 0) / 1000).toFixed(1)}K
-            </span>
-          </div>
-        </div>
-      </motion.article>
-    );
-  }
-
-  if (variant === 'compact') {
-    return (
-      <motion.article
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="group flex gap-3 py-3 border-b border-border last:border-0"
-      >
-        <span className="text-2xl font-serif font-bold text-muted-foreground/30 shrink-0 w-8">
-          {String(blogPosts.indexOf(post) + 1).padStart(2, '0')}
-        </span>
-        <div>
-          <Link href={`/blog/${post.slug}`}>
-            <h4 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
-              {post.title}
-            </h4>
-          </Link>
-          <p className="text-xs text-muted-foreground mt-1">{post.readTime}</p>
-        </div>
-      </motion.article>
-    );
-  }
 
   return (
     <motion.article
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
+      transition={{ delay: (index % 3) * 0.1 }}
       className="group bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-shadow"
     >
       <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] overflow-hidden">
         <img
-          src={post.image}
+          src={imageSrc(post.image) || '/images/placeholder.jpg'}
           alt={post.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        {(post.isMustRead || post.isPopular) && (
-          <div className="absolute top-3 left-3 flex gap-2">
-            {post.isMustRead && (
-              <Badge className="bg-accent text-accent-foreground text-[10px]">
-                <Bookmark className="w-3 h-3 mr-1" />
-                Must Read
-              </Badge>
-            )}
-            {post.isPopular && (
-              <Badge className="bg-secondary text-secondary-foreground text-[10px]">
-                <TrendingUp className="w-3 h-3 mr-1" />
-                Trending
-              </Badge>
-            )}
-          </div>
-        )}
+        <div className="absolute top-3 left-3 flex gap-2">
+          {post.isMustRead && (
+            <Badge className="bg-accent text-accent-foreground text-[10px] border-none">
+              <Bookmark className="w-3 h-3 mr-1" />
+              Must Read
+            </Badge>
+          )}
+          {post.isPopular && (
+            <Badge className="bg-secondary text-secondary-foreground text-[10px] border-none">
+              <TrendingUp className="w-3 h-3 mr-1" />
+              Trending
+            </Badge>
+          )}
+        </div>
       </Link>
       <div className="p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Badge variant="outline" className="text-[10px]">
-            <CategoryIcon name={categoryInfo?.icon} className="w-3 h-3 mr-1" />
-            {categoryInfo?.name}
+          <Badge variant="outline" className="text-[10px] capitalize">
+            {categoryInfo ? (
+              <CategoryIcon name={categoryInfo.icon} className="w-3 h-3 mr-1" />
+            ) : <BookOpen className="w-3 h-3 mr-1" />}
+            {categoryInfo?.name || post.category?.replace(/-/g, ' ')}
           </Badge>
         </div>
         <Link href={`/blog/${post.slug}`}>
@@ -284,145 +207,33 @@ function BlogCard({ post, variant = 'default' }) {
         <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{post.excerpt}</p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img
-              src={post.author.avatar}
-              alt={post.author.name}
-              className="w-8 h-8 rounded-full object-cover"
-            />
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+              {post.authorAvatar ? (
+                <img src={imageSrc(post.authorAvatar)} alt={post.authorName} className="w-full h-full object-cover" />
+              ) : (
+                <BookOpen className="w-4 h-4 text-primary" />
+              )}
+            </div>
             <div>
-              <p className="text-xs font-medium">{post.author.name}</p>
-              <p className="text-[10px] text-muted-foreground">{post.author.role}</p>
+              <p className="text-xs font-medium">{post.authorName || ''}</p>
+              <p className="text-[10px] text-muted-foreground">{post.authorRole || ''}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {post.readTime}
-            </span>
+            {post.readTime && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {post.readTime}
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <Eye className="w-3 h-3" />
-              {((post.views || 0) / 1000).toFixed(1)}K
+              {post.views > 999 ? `${(post.views / 1000).toFixed(1)}K` : post.views}
             </span>
           </div>
         </div>
       </div>
     </motion.article>
-  );
-}
-
-function MustReadSection() {
-  const mustReadPosts = getMustReadBlogs().slice(0, 3);
-  return (
-    <section className="py-12">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-            <Bookmark className="w-5 h-5 text-accent" />
-          </div>
-          <div>
-            <h2 className="text-xl md:text-2xl font-serif font-bold">Must Read</h2>
-            <p className="text-sm text-muted-foreground">
-              Essential articles for your spiritual journey
-            </p>
-          </div>
-        </div>
-        <Button variant="ghost" size="sm" className="hidden md:flex" asChild>
-          <Link href="/blog">
-            View All <ArrowRight className="ml-2 w-4 h-4" />
-          </Link>
-        </Button>
-      </div>
-      <div className="grid md:grid-cols-3 gap-6">
-        {mustReadPosts.map((post) => (
-          <BlogCard key={post.id} post={post} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function PopularSection() {
-  const popularPosts = getPopularBlogs().slice(0, 4);
-  const trendingPosts = [...blogPosts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
-
-  return (
-    <section className="py-12">
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-secondary" />
-            </div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-serif font-bold">Popular Stories</h2>
-              <p className="text-sm text-muted-foreground">What our readers love most</p>
-            </div>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-6">
-            {popularPosts.map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
-          </div>
-        </div>
-        <aside className="lg:col-span-1">
-          <div className="sticky top-32 bg-muted/30 rounded-xl p-5 border border-border">
-            <h3 className="font-serif font-bold mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              Trending Now
-            </h3>
-            <div className="space-y-1">
-              {trendingPosts.map((post, index) => (
-                <div
-                  key={post.id}
-                  className="flex gap-3 py-3 border-b border-border last:border-0"
-                >
-                  <span className="text-2xl font-serif font-bold text-primary/30 shrink-0 w-8">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div>
-                    <Link
-                      href={`/blog/${post.slug}`}
-                      className="hover:text-primary transition-colors"
-                    >
-                      <h4 className="font-medium text-sm line-clamp-2">{post.title}</h4>
-                    </Link>
-                    <p className="text-xs text-muted-foreground mt-1">{post.readTime}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
-      </div>
-    </section>
-  );
-}
-
-function AllArticlesSection({ category }) {
-  const filteredPosts = getBlogsByCategory(category);
-  const categoryInfo = blogCategories.find((c) => c.id === category);
-
-  return (
-    <section className="py-12">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-xl md:text-2xl font-serif font-bold">
-          {category === 'all' ? 'All Articles' : categoryInfo?.name}
-          <span className="text-muted-foreground font-normal text-base ml-2">
-            ({filteredPosts.length})
-          </span>
-        </h2>
-      </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPosts.map((post) => (
-          <BlogCard key={post.id} post={post} />
-        ))}
-      </div>
-      {filteredPosts.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-muted-foreground">No articles found in this category.</p>
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -453,7 +264,7 @@ function NewsletterCTA() {
               placeholder="Enter your email"
               className="flex-1 h-11 bg-background/15 border-background/20 text-primary-foreground placeholder:text-primary-foreground/50"
             />
-            <Button type="submit" className="h-11 bg-foreground text-background hover:bg-foreground/90">
+            <Button type="submit" className="h-11 bg-foreground text-background hover:bg-foreground/90 border-none">
               Subscribe
             </Button>
           </form>
@@ -465,20 +276,135 @@ function NewsletterCTA() {
 
 export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPosts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await blogApi.getPublicBlogs({
+        category: activeCategory === 'all' ? undefined : activeCategory
+      });
+      setPosts(data?.blogPosts || []);
+    } catch (err) {
+      console.error('Failed to fetch blog posts:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeCategory]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  const featuredPost = posts.find((p) => p.isFeatured) || posts[0];
+  const mustReadPosts = posts.filter((p) => p.isMustRead).slice(0, 3);
+  const popularPosts = posts.filter((p) => p.isPopular).slice(0, 4);
+  const trendingPosts = [...posts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
 
   return (
     <main className="min-h-screen">
-      <BlogHero />
+      <BlogHero featuredPost={loading ? null : featuredPost} />
       <CategoryNav activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
-      <div className="container">
-        {activeCategory === 'all' ? (
-          <>
-            <MustReadSection />
-            <PopularSection />
-            <AllArticlesSection category={activeCategory} />
-          </>
+
+      <div className="container py-8">
+        {loading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 py-12">
+            {[...Array(6)].map((_, i) => <LoadingCard key={i} />)}
+          </div>
         ) : (
-          <AllArticlesSection category={activeCategory} />
+          <>
+            {activeCategory === 'all' && (
+              <>
+                {/* Must Read Section */}
+                {mustReadPosts.length > 0 && (
+                  <section className="py-12 border-b border-border mb-12">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                        <Bookmark className="w-5 h-5 text-accent" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl md:text-2xl font-serif font-bold">Must Read</h2>
+                        <p className="text-sm text-muted-foreground">Essential articles for your spiritual journey</p>
+                      </div>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-6">
+                      {mustReadPosts.map((post, i) => (
+                        <BlogCard key={post.id} post={post} index={i} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Popular & Trending Section */}
+                {popularPosts.length > 0 && (
+                  <section className="py-12 border-b border-border mb-12">
+                    <div className="grid lg:grid-cols-3 gap-8">
+                      <div className="lg:col-span-2">
+                        <div className="flex items-center gap-3 mb-8">
+                          <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                            <TrendingUp className="w-5 h-5 text-secondary" />
+                          </div>
+                          <div>
+                            <h2 className="text-xl md:text-2xl font-serif font-bold">Popular Stories</h2>
+                            <p className="text-sm text-muted-foreground">What our readers love most</p>
+                          </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-6">
+                          {popularPosts.map((post, i) => (
+                            <BlogCard key={post.id} post={post} index={i} />
+                          ))}
+                        </div>
+                      </div>
+                      <aside className="lg:col-span-1">
+                        <div className="sticky top-32 bg-muted/30 rounded-xl p-5 border border-border">
+                          <h3 className="font-serif font-bold mb-4 flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-primary" />
+                            Trending Now
+                          </h3>
+                          <div className="space-y-1">
+                            {trendingPosts.map((post, index) => (
+                              <div key={post.id} className="flex gap-3 py-3 border-b border-border last:border-0">
+                                <span className="text-2xl font-serif font-bold text-primary/30 shrink-0 w-8">
+                                  {String(index + 1).padStart(2, '0')}
+                                </span>
+                                <div>
+                                  <Link href={`/blog/${post.slug}`} className="hover:text-primary transition-colors">
+                                    <h4 className="font-medium text-sm line-clamp-2">{post.title}</h4>
+                                  </Link>
+                                  <p className="text-xs text-muted-foreground mt-1">{post.readTime}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </aside>
+                    </div>
+                  </section>
+                )}
+              </>
+            )}
+
+            {/* All Articles Section */}
+            <section className="py-12">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl md:text-2xl font-serif font-bold">
+                  {activeCategory === 'all' ? 'Latest Insight' : blogCategories.find(c => c.id === activeCategory)?.name || 'Articles'}
+                  <span className="text-muted-foreground font-normal text-base ml-2">({posts.length})</span>
+                </h2>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {posts.map((post, i) => (
+                  <BlogCard key={post.id} post={post} index={i} />
+                ))}
+              </div>
+              {posts.length === 0 && (
+                <div className="text-center py-16">
+                  <p className="text-muted-foreground">No articles found.</p>
+                </div>
+              )}
+            </section>
+          </>
         )}
         <NewsletterCTA />
       </div>
