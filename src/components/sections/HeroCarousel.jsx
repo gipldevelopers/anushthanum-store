@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight, Shield, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { contentApi } from '@/services/contentApi';
 
 const slides = [
   {
@@ -45,17 +46,35 @@ const slides = [
   },
 ];
 
+const DEFAULT_SLIDES = slides;  // keep the original static array as fallback
+
+
 export default function HeroCarousel() {
+  const [activeSlides, setActiveSlides] = useState(DEFAULT_SLIDES);
   const [current, setCurrent] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // Fetch CMS slides (fallback to DEFAULT_SLIDES on any error)
+  useEffect(() => {
+    contentApi
+      .getPage('homepage')
+      .then((res) => {
+        const apiSlides = res?.page?.content?.heroSlides;
+        if (Array.isArray(apiSlides) && apiSlides.length > 0) {
+          setActiveSlides(apiSlides);
+        }
+      })
+      .catch(() => {/* silently fall back */ });
+  }, []);
 
   useEffect(() => {
     if (!isAutoPlaying) return;
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length);
+      setCurrent((prev) => (prev + 1) % activeSlides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, activeSlides.length]);
+
 
   const goTo = (index) => {
     setCurrent(index);
@@ -63,13 +82,13 @@ export default function HeroCarousel() {
     setTimeout(() => setIsAutoPlaying(true), 10000);
   };
 
-  const prev = () => goTo((current - 1 + slides.length) % slides.length);
-  const next = () => goTo((current + 1) % slides.length);
+  const prev = () => goTo((current - 1 + activeSlides.length) % activeSlides.length);
+  const next = () => goTo((current + 1) % activeSlides.length);
 
   return (
     <section className="relative h-[60vh] min-h-[400px] max-h-[600px] overflow-hidden">
       <AnimatePresence mode="wait">
-        {slides.map(
+        {activeSlides.map(
           (slide, index) =>
             index === current && (
               <motion.div
@@ -99,7 +118,7 @@ export default function HeroCarousel() {
                     className="max-w-xl text-white pt-8 md:pt-0"
                   >
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {slide.badges.map((badge, i) => (
+                      {(slide.badges || []).map((badge, i) => (
                         <span
                           key={i}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-sm rounded-full text-[10px] sm:text-xs font-medium text-white border border-white/20"
@@ -119,14 +138,14 @@ export default function HeroCarousel() {
                       {slide.description}
                     </p>
                     <p className="text-sm text-gray-100 mb-6 max-w-md leading-relaxed sm:hidden">
-                      {slide.description.substring(0, 100)}...
+                      {(slide.description || '').substring(0, 100)}...
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Button
                         asChild
                         className="bg-primary hover:bg-primary/90 text-primary-foreground group btn-glow px-6"
                       >
-                        <Link href={slide.link}>
+                        <Link href={slide.link || '#'}>
                           {slide.cta}
                           <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </Link>
@@ -164,7 +183,7 @@ export default function HeroCarousel() {
       </button>
 
       <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
-        {slides.map((_, index) => (
+        {activeSlides.map((_, index) => (
           <button
             key={index}
             type="button"

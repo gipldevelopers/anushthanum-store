@@ -24,15 +24,7 @@ const BLOG_CATEGORIES = [
   { id: 'wellness', name: 'Spiritual Wellness' },
 ];
 
-const API_ORIGIN =
-  typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
-    : '';
-function imageSrc(url) {
-  if (!url) return null;
-  if (url.startsWith('http') || url.startsWith('//')) return url;
-  return API_ORIGIN ? `${API_ORIGIN}${url}` : url;
-}
+import { imageSrc } from '@/lib/utils';
 
 export default function EditBlogPostPage() {
   const router = useRouter();

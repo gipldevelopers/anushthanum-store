@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -25,7 +26,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { getBlogBySlug, blogPosts, blogCategories } from '@/data/blogs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { blogApi } from '@/services/blogApi';
+import { imageSrc } from '@/lib/utils';
+import { blogCategories } from '@/data/blogs';
 
 const categoryIcons = {
   BookOpen,
@@ -40,7 +44,7 @@ const categoryIcons = {
 
 function CategoryIcon({ name, className = "w-4 h-4" }) {
   const Icon = categoryIcons[name];
-  return Icon ? <Icon className={className} /> : null;
+  return Icon ? <Icon className={className} /> : <BookOpen className={className} />;
 }
 
 function renderContent(content) {
@@ -78,7 +82,7 @@ function renderContent(content) {
           {trimmed.replace('## ', '')}
         </h2>
       );
-    } else if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+    } else if (trimmed.startsWith('**') && (trimmed.endsWith('**') || trimmed.includes(':'))) {
       flushList();
       elements.push(
         <h3
@@ -88,8 +92,8 @@ function renderContent(content) {
           {trimmed.replace(/\*\*/g, '')}
         </h3>
       );
-    } else if (trimmed.startsWith('- ')) {
-      currentList.push(trimmed.replace('- ', ''));
+    } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      currentList.push(trimmed.substring(2));
     } else if (/^\d+\./.test(trimmed)) {
       flushList();
       const number = trimmed.match(/^(\d+)\./)?.[1];
@@ -119,7 +123,49 @@ function renderContent(content) {
 export default function BlogPostPage() {
   const params = useParams();
   const slug = params?.slug ?? '';
-  const post = getBlogBySlug(slug);
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [relatedPosts, setRelatedPosts] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!slug) return;
+      setLoading(true);
+      try {
+        const data = await blogApi.getBlogBySlug(slug);
+        setPost(data?.blogPost);
+
+        // Fetch related posts (same category)
+        if (data?.blogPost?.category) {
+          const related = await blogApi.getPublicBlogs({
+            category: data.blogPost.category,
+            limit: 4
+          });
+          setRelatedPosts(related?.blogPosts?.filter(p => p.slug !== slug).slice(0, 3) || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch blog post:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="container max-w-4xl py-12 space-y-8">
+        <Skeleton className="h-4 w-1/4" />
+        <Skeleton className="h-12 w-3/4" />
+        <Skeleton className="aspect-video w-full rounded-2xl" />
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
@@ -132,15 +178,11 @@ export default function BlogPostPage() {
     );
   }
 
-  const formattedDate = new Date(post.date).toLocaleDateString('en-US', {
+  const formattedDate = post.date || (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
-  });
-
-  const relatedPosts = blogPosts
-    .filter((p) => p.category === post.category && p.id !== post.id)
-    .slice(0, 3);
+  }) : '');
 
   const categoryInfo = blogCategories.find((c) => c.id === post.category);
 
@@ -173,12 +215,12 @@ export default function BlogPostPage() {
           className="mb-8"
         >
           <div className="flex items-center gap-2 mb-4">
-            <Badge variant="outline">
+            <Badge variant="outline" className="capitalize">
               <CategoryIcon name={categoryInfo?.icon} className="w-4 h-4 mr-2" />
-              {categoryInfo?.name}
+              {categoryInfo?.name || post.category?.replace(/-/g, ' ')}
             </Badge>
             {post.isMustRead && (
-              <Badge className="bg-accent text-accent-foreground">Must Read</Badge>
+              <Badge className="bg-accent text-accent-foreground border-none">Must Read</Badge>
             )}
           </div>
           <h1 className="text-2xl md:text-4xl font-serif font-bold mb-4 leading-tight">
@@ -187,14 +229,18 @@ export default function BlogPostPage() {
           <p className="text-lg text-muted-foreground mb-6">{post.excerpt}</p>
           <div className="flex flex-wrap items-center gap-4 md:gap-6">
             <div className="flex items-center gap-3">
-              <img
-                src={post.author.avatar}
-                alt={post.author.name}
-                className="w-12 h-12 rounded-full object-cover"
-              />
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center">
+                {post.authorAvatar ? (
+                  <img
+                    src={imageSrc(post.authorAvatar)}
+                    alt={post.authorName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : <BookOpen className="w-6 h-6 text-primary" />}
+              </div>
               <div>
-                <p className="font-medium">{post.author.name}</p>
-                <p className="text-sm text-muted-foreground">{post.author.role}</p>
+                <p className="font-medium">{post.authorName || ''}</p>
+                <p className="text-sm text-muted-foreground">{post.authorRole || ''}</p>
               </div>
             </div>
             <Separator orientation="vertical" className="h-8 hidden md:block" />
@@ -203,10 +249,12 @@ export default function BlogPostPage() {
                 <Calendar className="w-4 h-4" />
                 {formattedDate}
               </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                {post.readTime}
-              </span>
+              {post.readTime && (
+                <span className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  {post.readTime}
+                </span>
+              )}
               <span className="flex items-center gap-1">
                 <Eye className="w-4 h-4" />
                 {(post.views || 0).toLocaleString()} views
@@ -219,10 +267,10 @@ export default function BlogPostPage() {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="aspect-video rounded-2xl overflow-hidden mb-10"
+          className="aspect-video rounded-2xl overflow-hidden mb-10 shadow-lg"
         >
           <img
-            src={post.image}
+            src={imageSrc(post.image) || '/images/placeholder.jpg'}
             alt={post.title}
             className="w-full h-full object-cover"
           />
@@ -234,13 +282,15 @@ export default function BlogPostPage() {
           transition={{ delay: 0.2 }}
           className="prose prose-lg max-w-none"
         >
-          {renderContent(post.content)}
+          {post.content?.includes('<') ? (
+            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+          ) : renderContent(post.content)}
         </motion.article>
 
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-border">
             {post.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs text-white">
+              <Badge key={tag} variant="secondary" className="text-xs">
                 #{tag}
               </Badge>
             ))}
@@ -268,18 +318,23 @@ export default function BlogPostPage() {
 
         <div className="bg-muted/30 rounded-xl p-6 mb-12">
           <div className="flex items-start gap-4 flex-wrap">
-            <img
-              src={post.author.avatar}
-              alt={post.author.name}
-              className="w-16 h-16 rounded-full object-cover"
-            />
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
+              {post.authorAvatar ? (
+                <img
+                  src={imageSrc(post.authorAvatar)}
+                  alt={post.authorName}
+                  className="w-full h-full object-cover"
+                />
+              ) : <BookOpen className="w-8 h-8 text-primary" />}
+            </div>
             <div>
-              <h3 className="font-serif font-bold text-lg">{post.author.name}</h3>
-              <p className="text-sm text-muted-foreground mb-2">{post.author.role}</p>
-              <p className="text-sm text-muted-foreground">
-                An expert in Vedic traditions with over 15 years of experience guiding seekers on
-                their spiritual journey.
-              </p>
+              <h3 className="font-serif font-bold text-lg">{post.authorName || ''}</h3>
+              <p className="text-sm text-muted-foreground mb-2">{post.authorRole || ''}</p>
+              {post.authorBio && (
+                <p className="text-sm text-muted-foreground">
+                  {post.authorBio}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -294,9 +349,9 @@ export default function BlogPostPage() {
                   href={`/blog/${relatedPost.slug}`}
                   className="group"
                 >
-                  <div className="aspect-[4/3] rounded-lg overflow-hidden mb-3">
+                  <div className="aspect-[4/3] rounded-lg overflow-hidden mb-3 shadow-md">
                     <img
-                      src={relatedPost.image}
+                      src={imageSrc(relatedPost.image) || '/images/placeholder.jpg'}
                       alt={relatedPost.title}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
@@ -304,7 +359,7 @@ export default function BlogPostPage() {
                   <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
                     {relatedPost.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-1">{relatedPost.readTime}</p>
+                  {relatedPost.readTime && <p className="text-xs text-muted-foreground mt-1">{relatedPost.readTime}</p>}
                 </Link>
               ))}
             </div>

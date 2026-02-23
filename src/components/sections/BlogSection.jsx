@@ -1,13 +1,34 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight, Calendar, User } from 'lucide-react';
+import { ArrowRight, Calendar, User, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { blogPosts } from '@/data/blogs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { blogApi } from '@/services/blogApi';
+import { imageSrc } from '@/lib/utils';
 
 export default function BlogSection() {
-  const posts = blogPosts.slice(0, 3);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const data = await blogApi.getPublicBlogs({ limit: 3 });
+        setPosts(data?.blogPosts || []);
+      } catch (err) {
+        console.error('Failed to fetch blog posts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPosts();
+  }, []);
+
+  if (!loading && posts.length === 0) return null;
+
   return (
     <section className="section-padding">
       <div className="container">
@@ -46,56 +67,69 @@ export default function BlogSection() {
           </motion.div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {posts.map((post, index) => (
-            <motion.article
-              key={post.id}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="group bg-card rounded-xl overflow-hidden border border-border card-hover"
-            >
-              <Link
-                href={`/blog/${post.slug}`}
-                className="block relative aspect-[16/10] overflow-hidden"
-              >
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <span className="absolute top-3 left-3 px-2.5 py-1 bg-primary text-primary-foreground text-[10px] font-medium rounded-md">
-                  {post.category}
-                </span>
-              </Link>
-              <div className="p-4 md:p-5">
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2.5">
-                  <span className="flex items-center gap-1">
-                    <User className="w-3 h-3" />
-                    {post.author?.name || post.author}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {post.date}
-                  </span>
+          {loading
+            ? [...Array(3)].map((_, i) => (
+              <div key={i} className="bg-card rounded-xl overflow-hidden border border-border">
+                <Skeleton className="aspect-[16/10] w-full" />
+                <div className="p-5 space-y-3">
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-4 w-full" />
                 </div>
-                <Link href={`/blog/${post.slug}`}>
-                  <h3 className="text-sm md:text-base font-serif font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
-                    {post.title}
-                  </h3>
-                </Link>
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{post.excerpt}</p>
+              </div>
+            ))
+            : posts.map((post, index) => (
+              <motion.article
+                key={post.id}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="group bg-card rounded-xl overflow-hidden border border-border card-hover"
+              >
                 <Link
                   href={`/blog/${post.slug}`}
-                  className="inline-flex items-center text-xs font-medium text-primary"
+                  className="block relative aspect-[16/10] overflow-hidden"
                 >
-                  Read More
-                  <ArrowRight className="ml-1 w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  <img
+                    src={imageSrc(post.image) || '/images/placeholder.jpg'}
+                    alt={post.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  {post.category && (
+                    <span className="absolute top-3 left-3 px-2.5 py-1 bg-primary text-primary-foreground text-[10px] font-medium rounded-md capitalize">
+                      {post.category.replace(/-/g, ' ')}
+                    </span>
+                  )}
                 </Link>
-              </div>
-            </motion.article>
-          ))}
+                <div className="p-4 md:p-5">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2.5">
+                    <span className="flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      {post.authorName || (typeof post.author === 'object' ? post.author.name : post.author) || ''}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {post.date || (post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : '')}
+                    </span>
+                  </div>
+                  <Link href={`/blog/${post.slug}`}>
+                    <h3 className="text-sm md:text-base font-serif font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
+                      {post.title}
+                    </h3>
+                  </Link>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{post.excerpt}</p>
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="inline-flex items-center text-xs font-medium text-primary"
+                  >
+                    Read More
+                    <ArrowRight className="ml-1 w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+              </motion.article>
+            ))}
         </div>
       </div>
     </section>
