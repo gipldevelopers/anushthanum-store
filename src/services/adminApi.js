@@ -82,6 +82,14 @@ export const ordersApi = {
     adminApi.patch(`/admin/orders/${id}/status`, { status }).then(handleResponse).catch(handleError),
 };
 
+export const usersApi = {
+  getAll: (params) =>
+    adminApi.get('/admin/users', { params }).then(handleResponse).catch(handleError),
+  getById: (id) => adminApi.get(`/admin/users/${id}`).then(handleResponse).catch(handleError),
+  update: (id, data) =>
+    adminApi.put(`/admin/users/${id}`, data).then(handleResponse).catch(handleError),
+};
+
 export const blogsApi = {
   getAll: (params) =>
     adminApi.get('/admin/blogs', { params }).then(handleResponse).catch(handleError),

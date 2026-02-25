@@ -15,6 +15,7 @@ import {
   FolderOpen,
   Package,
   ShoppingCart,
+  Users,
   Image,
   FileText,
   Settings,
@@ -28,6 +29,7 @@ import {
 
 const navItems = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, exact: true },
+  { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Categories', href: '/admin/categories', icon: FolderTree },
   { label: 'Sub-Categories', href: '/admin/subcategories', icon: Layers },
   { label: 'Sub-Sub-Categories', href: '/admin/subsubcategories', icon: FolderOpen },
