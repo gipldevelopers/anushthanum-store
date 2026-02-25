@@ -159,12 +159,12 @@
 
 //   const mockUser = authUser
 //     ? {
-//         name: authUser.name || defaultUser.name,
-//         email: authUser.email || defaultUser.email,
-//         phone: authUser.phone || defaultUser.phone,
-//         avatar: defaultUser.avatar,
-//         memberSince: authUser.memberSince || defaultUser.memberSince,
-//         spiritualLevel: defaultUser.spiritualLevel,
+//         name: displayUser.name || authUser?.name || defaultUser.name,
+//         email: displayUser.email || authUser?.email || defaultUser.email,
+//         phone: displayUser.phone || authUser?.phone || defaultUser.phone,
+//         avatar: displayUser.avatar || authUser?.avatar || defaultUser.avatar,
+//         memberSince: displayUser.memberSince || authUser?.memberSince || defaultUser.memberSince,
+//         spiritualLevel: displayUser.spiritualLevel || authUser?.spiritualLevel || defaultUser.spiritualLevel,
 //       }
 //     : defaultUser;
 
@@ -964,19 +964,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { products } from '@/data/products';
+import { toast } from 'sonner';
+import { accountApi } from '@/services/accountApi';
 import { useAuth } from '@/context/AuthContext';
 
-const defaultUser = {
-  name: 'Arjun Sharma',
-  email: 'arjun.sharma@example.com',
-  phone: '+91 98765 43210',
-  avatar: '',
-  memberSince: 'January 2024',
-  spiritualLevel: 'Regular Practitioner',
-};
+const defaultUser = { name: 'User', email: '', phone: '', avatar: '', memberSince: '', spiritualLevel: 'Regular Practitioner' };
+const UPLOAD_BASE = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
+  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
+  : '';
+function toImgUrl(path) {
+  if (!path) return '/placeholder.svg';
+  if (path.startsWith('http')) return path;
+  return path.startsWith('/') ? `${UPLOAD_BASE}${path}` : `${UPLOAD_BASE}/${path}`;
+}
 
-const mockOrders = [
+const _mockOrders = [
   {
     id: 'ORD-2024-001',
     date: '2024-01-15',
@@ -1007,31 +1009,6 @@ const mockOrders = [
     status: 'cancelled',
     total: 1999,
     items: [{ name: 'Sage Incense Sticks', quantity: 2, price: 1999, image: '' }],
-  },
-];
-
-const mockAddresses = [
-  {
-    id: '1',
-    type: 'Home',
-    name: 'Arjun Sharma',
-    address: '42, Spiritual Heights, Sector 15',
-    city: 'Gurugram',
-    state: 'Haryana',
-    pincode: '122001',
-    phone: '+91 98765 43210',
-    isDefault: true,
-  },
-  {
-    id: '2',
-    type: 'Office',
-    name: 'Arjun Sharma',
-    address: 'Tech Park, Tower B, 5th Floor',
-    city: 'Noida',
-    state: 'Uttar Pradesh',
-    pincode: '201301',
-    phone: '+91 98765 43210',
-    isDefault: false,
   },
 ];
 
@@ -1160,10 +1137,152 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user: authUser, isAuthenticated, isLoading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [wishlistItems] = useState(products.slice(0, 4));
+  const [overview, setOverview] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [addresses, setAddresses] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
+  const [addAddressOpen, setAddAddressOpen] = useState(false);
+  const [editAddress, setEditAddress] = useState(null);
+  const [addressForm, setAddressForm] = useState({ name: '', phone: '', street: '', city: '', state: '', pincode: '', type: 'Home', isDefault: false });
+  const [addressSubmitting, setAddressSubmitting] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '', dateOfBirth: '', spiritualLevel: '' });
+  const [profileSubmitting, setProfileSubmitting] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
+
+  const fetchOverview = async () => {
+    try {
+      const res = await accountApi.getOverview();
+      setOverview(res);
+      setWishlist(res?.wishlist ?? []);
+    } catch (e) { toast.error(e?.message || 'Failed to load overview'); }
+  };
+  const fetchOrders = async () => {
+    try { const res = await accountApi.getOrders({ limit: 50 }); setOrders(res?.orders ?? []); }
+    catch (e) { toast.error(e?.message || 'Failed to load orders'); }
+  };
+  const fetchAddresses = async () => {
+    try { const res = await accountApi.getAddresses(); setAddresses(res?.addresses ?? []); }
+    catch (e) { toast.error(e?.message || 'Failed to load addresses'); }
+  };
+  const fetchWishlist = async () => {
+    try { const res = await accountApi.getWishlist(); setWishlist(res?.wishlist ?? []); }
+    catch (e) { toast.error(e?.message || 'Failed to load wishlist'); }
+  };
+
+  const resetAddressForm = () => {
+    setAddressForm({ name: '', phone: '', street: '', city: '', state: '', pincode: '', type: 'Home', isDefault: false });
+    setEditAddress(null);
+    setAddAddressOpen(false);
+  };
+
+  const handleCreateAddress = async (e) => {
+    e.preventDefault();
+    setAddressSubmitting(true);
+    try {
+      await accountApi.createAddress(addressForm);
+      toast.success('Address added');
+      resetAddressForm();
+      await fetchAddresses();
+      await fetchOverview();
+    } catch (e) { toast.error(e?.message || 'Failed to add address'); }
+    finally { setAddressSubmitting(false); }
+  };
+
+  const handleUpdateAddress = async (e) => {
+    e.preventDefault();
+    if (!editAddress) return;
+    setAddressSubmitting(true);
+    try {
+      await accountApi.updateAddress(editAddress.id, addressForm);
+      toast.success('Address updated');
+      resetAddressForm();
+      await fetchAddresses();
+      await fetchOverview();
+    } catch (e) { toast.error(e?.message || 'Failed to update address'); }
+    finally { setAddressSubmitting(false); }
+  };
+
+  const handleDeleteAddress = async (id) => {
+    if (!confirm('Remove this address?')) return;
+    try {
+      await accountApi.deleteAddress(id);
+      toast.success('Address removed');
+      await fetchAddresses();
+      await fetchOverview();
+    } catch (e) { toast.error(e?.message || 'Failed to remove address'); }
+  };
+
+  const handleSetDefaultAddress = async (id) => {
+    try {
+      await accountApi.updateAddress(id, { isDefault: true });
+      toast.success('Default address updated');
+      await fetchAddresses();
+      await fetchOverview();
+    } catch (e) { toast.error(e?.message || 'Failed to set default'); }
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setProfileSubmitting(true);
+    try {
+      await accountApi.updateProfile(profileForm);
+      toast.success('Profile updated');
+      await fetchOverview();
+    } catch (e) { toast.error(e?.message || 'Failed to update profile'); }
+    finally { setProfileSubmitting(false); }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!passwordForm.newPassword || passwordForm.newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    setPasswordSubmitting(true);
+    try {
+      await accountApi.changePassword({ currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword });
+      toast.success('Password updated');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (e) { toast.error(e?.message || 'Failed to change password'); }
+    finally { setPasswordSubmitting(false); }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you sure? This will deactivate your account and you will need to contact support to restore it.')) return;
+    setDeleteSubmitting(true);
+    try {
+      await accountApi.deleteAccount();
+      toast.success('Account deactivated');
+      signOut();
+      router.push('/');
+    } catch (e) { toast.error(e?.message || 'Failed to delete account'); }
+    finally { setDeleteSubmitting(false); }
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (activeTab === 'orders') fetchOrders();
+    if (activeTab === 'addresses') fetchAddresses();
+    if (activeTab === 'wishlist') fetchWishlist();
+    if (activeTab === 'settings') {
+      const u = overview?.user ?? authUser ?? {};
+      setProfileForm({
+        name: u.name ?? '',
+        phone: u.phone ?? '',
+        dateOfBirth: u.dateOfBirth ? (typeof u.dateOfBirth === 'string' ? u.dateOfBirth.slice(0, 10) : '') : '',
+        spiritualLevel: u.spiritualLevel ?? '',
+      });
+    }
+  }, [activeTab, isAuthenticated, overview?.user, authUser]);
 
   // Detect screen size
   useEffect(() => {
@@ -1186,23 +1305,25 @@ export default function ProfilePage() {
     }
     
     // Simulate initial loading for better UX
-    const timer = setTimeout(() => {
+    (async () => {
+      setIsLoadingPage(true);
+      await fetchOverview();
       setIsLoadingPage(false);
-    }, 300);
-    
-    return () => clearTimeout(timer);
+    })();
   }, [isLoading, isAuthenticated, router]);
 
-  const mockUser = authUser
-    ? {
-        name: authUser.name || defaultUser.name,
-        email: authUser.email || defaultUser.email,
-        phone: authUser.phone || defaultUser.phone,
-        avatar: defaultUser.avatar,
-        memberSince: authUser.memberSince || defaultUser.memberSince,
-        spiritualLevel: defaultUser.spiritualLevel,
+  const displayUser = overview?.user ?? authUser ?? {};
+  const mockUser = (displayUser.name || displayUser.email || authUser) ? {
+        name: displayUser.name || authUser?.name || defaultUser.name,
+        email: displayUser.email || authUser?.email || defaultUser.email,
+        phone: displayUser.phone || authUser?.phone || defaultUser.phone,
+        avatar: displayUser.avatar || authUser?.avatar || defaultUser.avatar,
+        memberSince: displayUser.memberSince || authUser?.memberSince || defaultUser.memberSince,
+        spiritualLevel: displayUser.spiritualLevel || authUser?.spiritualLevel || defaultUser.spiritualLevel,
       }
     : defaultUser;
+  const recentOrders = overview?.recentOrders ?? [];
+  const displayOrders = activeTab === 'orders' ? orders : recentOrders;
 
   const getStatusConfig = (status) =>
     statusConfig[status] || statusConfig.processing;
@@ -1432,34 +1553,10 @@ export default function ProfilePage() {
                   {/* Stats Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                     {[
-                      {
-                        label: 'Total Orders',
-                        value: '12',
-                        icon: Package,
-                        color: 'text-blue-600',
-                        bg: 'bg-blue-500/10',
-                      },
-                      {
-                        label: 'Wishlist',
-                        value: '4',
-                        icon: Heart,
-                        color: 'text-rose-600',
-                        bg: 'bg-rose-500/10',
-                      },
-                      {
-                        label: 'Addresses',
-                        value: '2',
-                        icon: MapPin,
-                        color: 'text-green-600',
-                        bg: 'bg-green-500/10',
-                      },
-                      {
-                        label: 'Points',
-                        value: '850',
-                        icon: Star,
-                        color: 'text-amber-600',
-                        bg: 'bg-amber-500/10',
-                      },
+                      { label: 'Total Orders', value: String(overview?.totalOrders ?? 0), icon: Package, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+                      { label: 'Wishlist', value: String(overview?.totalWishlist ?? wishlist.length ?? 0), icon: Heart, color: 'text-rose-600', bg: 'bg-rose-500/10' },
+                      { label: 'Addresses', value: String(overview?.totalAddresses ?? addresses.length ?? 0), icon: MapPin, color: 'text-green-600', bg: 'bg-green-500/10' },
+                      { label: 'Points', value: String(overview?.user?.rewardPoints ?? 0), icon: Star, color: 'text-amber-600', bg: 'bg-amber-500/10' },
                     ].map((stat) => (
                       <Card key={stat.label} className={`${stat.bg} border-0`}>
                         <CardContent className="p-3 sm:p-4 text-center">
@@ -1499,9 +1596,10 @@ export default function ProfilePage() {
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                       <div className="space-y-3">
-                        {mockOrders.slice(0, 2).map((order) => {
+                        {recentOrders.slice(0, 2).map((order) => {
                           const status = getStatusConfig(order.status);
                           const StatusIcon = status.icon;
+                          const itemCount = order.itemCount ?? order.items?.length ?? 0;
                           return (
                             <div
                               key={order.id}
@@ -1512,12 +1610,10 @@ export default function ProfilePage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-sm sm:text-base truncate">
-                                  {order.id}
+                                  {order.orderNumber}
                                 </p>
                                 <p className="text-xs sm:text-sm text-muted-foreground">
-                                  {order.items.length} item
-                                  {order.items.length > 1 ? 's' : ''} • ₹
-                                  {order.total.toLocaleString()}
+                                  {itemCount} item{itemCount !== 1 ? 's' : ''} • ₹{Number(order.total || 0).toLocaleString()}
                                 </p>
                               </div>
                               <Badge
@@ -1559,7 +1655,7 @@ export default function ProfilePage() {
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {wishlistItems.slice(0, 4).map((product) => (
+                        {(wishlist ?? []).slice(0, 4).map((product) => (
                           <Link
                             key={product.id}
                             href={`/product/${product.slug}`}
@@ -1567,7 +1663,7 @@ export default function ProfilePage() {
                           >
                             <div className="aspect-square rounded-lg overflow-hidden bg-muted mb-2">
                               <img
-                                src={product.images[0]}
+                                src={toImgUrl(product.image)}
                                 alt={product.name}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 loading="lazy"
@@ -1577,7 +1673,7 @@ export default function ProfilePage() {
                               {product.name}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              ₹{product.price.toLocaleString()}
+                              ₹{Number(product.price || product.discountPrice || 0).toLocaleString()}
                             </p>
                           </Link>
                         ))}
@@ -1601,29 +1697,32 @@ export default function ProfilePage() {
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                       <div className="space-y-4">
-                        {mockOrders.map((order) => {
+                        {(displayOrders ?? []).map((order) => {
                           const status = getStatusConfig(order.status);
                           const StatusIcon = status.icon;
+                          const orderId = order.orderNumber || order.id;
+                          const orderDate = order.createdAt || order.date;
+                          const orderItems = order.items ?? [];
                           return (
                             <div
-                              key={order.id}
+                              key={order.id || orderId}
                               className="border rounded-xl overflow-hidden"
                             >
                               <div className="p-4 bg-muted/50">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                   <div>
                                     <p className="font-semibold text-sm sm:text-base">
-                                      {order.id}
+                                      {orderId}
                                     </p>
                                     <p className="text-xs sm:text-sm text-muted-foreground">
-                                      {new Date(order.date).toLocaleDateString(
+                                      {orderDate ? new Date(orderDate).toLocaleDateString(
                                         'en-IN',
                                         {
                                           day: 'numeric',
                                           month: 'short',
                                           year: 'numeric',
                                         }
-                                      )}
+                                      ) : ''}
                                     </p>
                                   </div>
                                   <div className="flex items-center gap-3">
@@ -1636,30 +1735,34 @@ export default function ProfilePage() {
                                       <span className="sm:hidden">{status.label.slice(0, 3)}</span>
                                     </Badge>
                                     <p className="font-semibold text-sm sm:text-base whitespace-nowrap">
-                                      ₹{order.total.toLocaleString()}
+                                      ₹{(order.total ?? 0).toLocaleString()}
                                     </p>
                                   </div>
                                 </div>
                               </div>
                               <div className="p-4">
-                                {order.items.map((item, idx) => (
+                                {orderItems.map((item, idx) => (
                                   <div
-                                    key={idx}
+                                    key={item.id ?? idx}
                                     className="flex items-center gap-3 py-2"
                                   >
                                     <div className="w-12 h-12 sm:w-14 sm:h-14 bg-muted rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
-                                      <Package className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
+                                      {item.productImage ? (
+                                        <img src={toImgUrl(item.productImage)} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <Package className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
+                                      )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <p className="font-medium text-sm sm:text-base truncate">
-                                        {item.name}
+                                        {item.productName ?? item.name}
                                       </p>
                                       <p className="text-xs sm:text-sm text-muted-foreground">
                                         Qty: {item.quantity}
                                       </p>
                                     </div>
                                     <p className="font-medium text-sm sm:text-base whitespace-nowrap">
-                                      ₹{item.price.toLocaleString()}
+                                      ₹{(item.price ?? item.total ?? 0).toLocaleString()}
                                     </p>
                                   </div>
                                 ))}
@@ -1718,7 +1821,7 @@ export default function ProfilePage() {
                             Manage your delivery addresses
                           </CardDescription>
                         </div>
-                        <Dialog>
+                        <Dialog open={addAddressOpen || !!editAddress} onOpenChange={(o) => { if (!o) resetAddressForm(); else { setEditAddress(null); setAddressForm({ name: '', phone: '', street: '', city: '', state: '', pincode: '', type: 'Home', isDefault: false }); setAddAddressOpen(true); } }}>
                           <DialogTrigger asChild>
                             <Button
                               size="sm"
@@ -1731,15 +1834,18 @@ export default function ProfilePage() {
                           <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                               <DialogTitle className="text-lg sm:text-xl">
-                                Add New Address
+                                {editAddress ? 'Edit Address' : 'Add New Address'}
                               </DialogTitle>
                             </DialogHeader>
-                            <div className="space-y-4 pt-4">
+                            <form onSubmit={editAddress ? handleUpdateAddress : handleCreateAddress} className="space-y-4 pt-4">
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                   <Label className="text-xs sm:text-sm">Full Name</Label>
                                   <Input
+                                    required
                                     placeholder="Enter full name"
+                                    value={addressForm.name}
+                                    onChange={(e) => setAddressForm((f) => ({ ...f, name: e.target.value }))}
                                     className="text-sm h-9 sm:h-10"
                                   />
                                 </div>
@@ -1747,6 +1853,8 @@ export default function ProfilePage() {
                                   <Label className="text-xs sm:text-sm">Phone</Label>
                                   <Input
                                     placeholder="+91"
+                                    value={addressForm.phone}
+                                    onChange={(e) => setAddressForm((f) => ({ ...f, phone: e.target.value }))}
                                     className="text-sm h-9 sm:h-10"
                                   />
                                 </div>
@@ -1754,7 +1862,10 @@ export default function ProfilePage() {
                               <div>
                                 <Label className="text-xs sm:text-sm">Address</Label>
                                 <Input
+                                  required
                                   placeholder="House no., Building, Street"
+                                  value={addressForm.street}
+                                  onChange={(e) => setAddressForm((f) => ({ ...f, street: e.target.value }))}
                                   className="text-sm h-9 sm:h-10"
                                 />
                               </div>
@@ -1762,14 +1873,20 @@ export default function ProfilePage() {
                                 <div>
                                   <Label className="text-xs sm:text-sm">City</Label>
                                   <Input
+                                    required
                                     placeholder="City"
+                                    value={addressForm.city}
+                                    onChange={(e) => setAddressForm((f) => ({ ...f, city: e.target.value }))}
                                     className="text-sm h-9 sm:h-10"
                                   />
                                 </div>
                                 <div>
                                   <Label className="text-xs sm:text-sm">State</Label>
                                   <Input
+                                    required
                                     placeholder="State"
+                                    value={addressForm.state}
+                                    onChange={(e) => setAddressForm((f) => ({ ...f, state: e.target.value }))}
                                     className="text-sm h-9 sm:h-10"
                                   />
                                 </div>
@@ -1778,29 +1895,38 @@ export default function ProfilePage() {
                                 <div>
                                   <Label className="text-xs sm:text-sm">Pincode</Label>
                                   <Input
+                                    required
                                     placeholder="6-digit pincode"
+                                    value={addressForm.pincode}
+                                    onChange={(e) => setAddressForm((f) => ({ ...f, pincode: e.target.value }))}
                                     className="text-sm h-9 sm:h-10"
                                   />
                                 </div>
                                 <div>
-                                  <Label className="text-xs sm:text-sm">
-                                    Address Type
-                                  </Label>
+                                  <Label className="text-xs sm:text-sm">Address Type</Label>
                                   <Input
                                     placeholder="Home / Office"
+                                    value={addressForm.type}
+                                    onChange={(e) => setAddressForm((f) => ({ ...f, type: e.target.value }))}
                                     className="text-sm h-9 sm:h-10"
                                   />
                                 </div>
                               </div>
-                              <Button className="w-full h-9 sm:h-10">Save Address</Button>
-                            </div>
+                              <div className="flex items-center gap-2">
+                                <input type="checkbox" id="addr-default" checked={addressForm.isDefault} onChange={(e) => setAddressForm((f) => ({ ...f, isDefault: e.target.checked }))} className="rounded" />
+                                <Label htmlFor="addr-default" className="text-xs sm:text-sm cursor-pointer">Set as default</Label>
+                              </div>
+                              <Button type="submit" className="w-full h-9 sm:h-10" disabled={addressSubmitting}>
+                                {addressSubmitting ? 'Saving...' : (editAddress ? 'Update' : 'Save')} Address
+                              </Button>
+                            </form>
                           </DialogContent>
                         </Dialog>
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                        {mockAddresses.map((address) => (
+                        {(addresses ?? []).map((address) => (
                           <div
                             key={address.id}
                             className={`relative p-4 rounded-xl border-2 ${
@@ -1827,7 +1953,7 @@ export default function ProfilePage() {
                               {address.name}
                             </p>
                             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                              {address.address}
+                              {address.street ?? address.address}
                               <br />
                               {address.city}, {address.state} - {address.pincode}
                             </p>
@@ -1839,6 +1965,10 @@ export default function ProfilePage() {
                                 variant="outline"
                                 size="sm"
                                 className="text-xs h-8"
+                                onClick={() => {
+                                  setEditAddress(address);
+                                  setAddressForm({ name: address.name, phone: address.phone ?? '', street: address.street ?? '', city: address.city, state: address.state, pincode: address.pincode, type: address.type ?? 'Home', isDefault: !!address.isDefault });
+                                }}
                               >
                                 <Edit3 className="w-3 h-3 mr-1" />
                                 Edit
@@ -1849,6 +1979,7 @@ export default function ProfilePage() {
                                     variant="outline"
                                     size="sm"
                                     className="text-xs h-8"
+                                    onClick={() => handleSetDefaultAddress(address.id)}
                                   >
                                     Set Default
                                   </Button>
@@ -1856,6 +1987,7 @@ export default function ProfilePage() {
                                     variant="ghost"
                                     size="sm"
                                     className="text-destructive text-xs h-8"
+                                    onClick={() => handleDeleteAddress(address.id)}
                                   >
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
@@ -1879,20 +2011,20 @@ export default function ProfilePage() {
                         Your Wishlist
                       </CardTitle>
                       <CardDescription className="text-xs sm:text-sm">
-                        {wishlistItems.length} items saved for later
+                        {(wishlist ?? []).length} items saved for later
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {wishlistItems.map((product) => (
+                        {(wishlist ?? []).map((product) => (
                           <div
-                            key={product.id}
+                            key={product.id ?? product.productId}
                             className="group relative bg-background border rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
                           >
-                            <Link href={`/product/${product.slug}`}>
+                            <Link href={product.slug ? `/product/${product.slug}` : '#'}>
                               <div className="aspect-square overflow-hidden">
                                 <img
-                                  src={product.images[0]}
+                                  src={toImgUrl(product.image)}
                                   alt={product.name}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   loading="lazy"
@@ -1903,6 +2035,16 @@ export default function ProfilePage() {
                               type="button"
                               className="absolute top-2 right-2 w-8 h-8 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-destructive hover:text-destructive-foreground transition-colors"
                               aria-label="Remove from wishlist"
+                              onClick={async () => {
+                                const pid = product.productId ?? product.id;
+                                if (!pid) return;
+                                try {
+                                  await accountApi.removeWishlistItem(pid);
+                                  toast.success('Removed from wishlist');
+                                  await fetchWishlist();
+                                  await fetchOverview();
+                                } catch (e) { toast.error(e?.message || 'Failed to remove'); }
+                              }}
                             >
                               <Heart className="w-4 h-4 fill-current" />
                             </button>
@@ -1918,7 +2060,7 @@ export default function ProfilePage() {
                               <div className="flex items-center justify-between">
                                 <div>
                                   <span className="font-bold text-base">
-                                    ₹{product.price.toLocaleString()}
+                                    ₹{(product.discountPrice ?? product.price ?? 0).toLocaleString()}
                                   </span>
                                   {product.originalPrice && (
                                     <span className="text-xs text-muted-foreground line-through ml-1">
@@ -1931,7 +2073,7 @@ export default function ProfilePage() {
                                   className="text-xs h-8"
                                   asChild
                                 >
-                                  <Link href={`/product/${product.slug}`}>
+                                  <Link href={product.slug ? `/product/${product.slug}` : '#'}>
                                     Add to Cart
                                   </Link>
                                 </Button>
@@ -1959,35 +2101,57 @@ export default function ProfilePage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-xs sm:text-sm">Full Name</Label>
-                          <Input
-                            defaultValue={mockUser.name}
-                            className="text-sm h-9 sm:h-10"
-                          />
+                      <form onSubmit={handleUpdateProfile}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-xs sm:text-sm">Full Name</Label>
+                            <Input
+                              value={profileForm.name}
+                              onChange={(e) => setProfileForm((f) => ({ ...f, name: e.target.value }))}
+                              className="text-sm h-9 sm:h-10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs sm:text-sm">Email Address</Label>
+                            <Input
+                              value={mockUser.email}
+                              type="email"
+                              className="text-sm h-9 sm:h-10"
+                              disabled
+                              title="Email cannot be changed"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs sm:text-sm">Phone Number</Label>
+                            <Input
+                              value={profileForm.phone}
+                              onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
+                              className="text-sm h-9 sm:h-10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs sm:text-sm">Date of Birth</Label>
+                            <Input
+                              type="date"
+                              value={profileForm.dateOfBirth}
+                              onChange={(e) => setProfileForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
+                              className="text-sm h-9 sm:h-10"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <Label className="text-xs sm:text-sm">Spiritual Level</Label>
+                            <Input
+                              value={profileForm.spiritualLevel}
+                              onChange={(e) => setProfileForm((f) => ({ ...f, spiritualLevel: e.target.value }))}
+                              placeholder="e.g. Regular Practitioner"
+                              className="text-sm h-9 sm:h-10"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <Label className="text-xs sm:text-sm">Email Address</Label>
-                          <Input
-                            defaultValue={mockUser.email}
-                            type="email"
-                            className="text-sm h-9 sm:h-10"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs sm:text-sm">Phone Number</Label>
-                          <Input
-                            defaultValue={mockUser.phone}
-                            className="text-sm h-9 sm:h-10"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs sm:text-sm">Date of Birth</Label>
-                          <Input type="date" className="text-sm h-9 sm:h-10" />
-                        </div>
-                      </div>
-                      <Button className="h-9 sm:h-10">Save Changes</Button>
+                        <Button type="submit" className="mt-4 h-9 sm:h-10" disabled={profileSubmitting}>
+                          {profileSubmitting ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                      </form>
                     </CardContent>
                   </Card>
 
@@ -2002,35 +2166,49 @@ export default function ProfilePage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
-                      <div>
-                        <Label className="text-xs sm:text-sm">Current Password</Label>
-                        <Input
-                          type="password"
-                          placeholder="Enter current password"
-                          className="text-sm h-9 sm:h-10"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <form onSubmit={handleChangePassword}>
                         <div>
-                          <Label className="text-xs sm:text-sm">New Password</Label>
+                          <Label className="text-xs sm:text-sm">Current Password</Label>
                           <Input
                             type="password"
-                            placeholder="Enter new password"
+                            required
+                            placeholder="Enter current password"
+                            value={passwordForm.currentPassword}
+                            onChange={(e) => setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))}
                             className="text-sm h-9 sm:h-10"
                           />
                         </div>
-                        <div>
-                          <Label className="text-xs sm:text-sm">
-                            Confirm New Password
-                          </Label>
-                          <Input
-                            type="password"
-                            placeholder="Confirm new password"
-                            className="text-sm h-9 sm:h-10"
-                          />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-xs sm:text-sm">New Password</Label>
+                            <Input
+                              type="password"
+                              required
+                              minLength={8}
+                              placeholder="Enter new password (min 8 chars)"
+                              value={passwordForm.newPassword}
+                              onChange={(e) => setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))}
+                              className="text-sm h-9 sm:h-10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs sm:text-sm">
+                              Confirm New Password
+                            </Label>
+                            <Input
+                              type="password"
+                              required
+                              placeholder="Confirm new password"
+                              value={passwordForm.confirmPassword}
+                              onChange={(e) => setPasswordForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                              className="text-sm h-9 sm:h-10"
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <Button className="h-9 sm:h-10">Update Password</Button>
+                        <Button type="submit" className="h-9 sm:h-10" disabled={passwordSubmitting}>
+                          {passwordSubmitting ? 'Updating...' : 'Update Password'}
+                        </Button>
+                      </form>
                     </CardContent>
                   </Card>
 
@@ -2151,8 +2329,10 @@ export default function ProfilePage() {
                           variant="destructive"
                           size="sm"
                           className="w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-9"
+                          onClick={handleDeleteAccount}
+                          disabled={deleteSubmitting}
                         >
-                          Delete Account
+                          {deleteSubmitting ? 'Deactivating...' : 'Delete Account'}
                         </Button>
                       </div>
                     </CardContent>

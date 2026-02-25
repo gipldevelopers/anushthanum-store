@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/select';
 import { useCart } from '@/context/CartContext';
 import { toast } from 'sonner';
+import { checkoutApi } from '@/services/checkoutApi';
 
 const steps = [
   { id: 'cart', label: 'Cart', icon: ShoppingBag },
@@ -45,8 +46,7 @@ const steps = [
 
 const paymentMethods = [
   { id: 'cod', name: 'Cash on Delivery', description: 'Pay when your order arrives', icon: '💵' },
-  { id: 'upi', name: 'UPI', description: 'Pay using GPay, PhonePe, Paytm', icon: '📱' },
-  { id: 'card', name: 'Credit/Debit Card', description: 'Visa, Mastercard, RuPay', icon: '💳' },
+  { id: 'online', name: 'Online Payment', description: 'Pay securely with UPI, Card, Netbanking via Razorpay', icon: '💳' },
 ];
 
 const indianStates = [
@@ -102,8 +102,8 @@ export default function CheckoutPage() {
   });
   const [formErrors, setFormErrors] = useState({});
   const [selectedPayment, setSelectedPayment] = useState('cod');
-  const [upiId, setUpiId] = useState('');
-  const [cardDetails, setCardDetails] = useState({ number: '', name: '', expiry: '', cvv: '' });
+  const [orderEmail, setOrderEmail] = useState('');
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoDiscount, setPromoDiscount] = useState(0);
@@ -112,7 +112,8 @@ export default function CheckoutPage() {
 
   const getShippingAddress = () => {
     if (addressMode === 'saved' && selectedAddressId) {
-      return savedAddresses.find((a) => a.id === selectedAddressId);
+      const addr = savedAddresses.find((a) => a.id === selectedAddressId);
+      return addr ? { ...addr, email: orderEmail } : null;
     }
     return newAddress;
   };
@@ -135,8 +136,11 @@ export default function CheckoutPage() {
   const total = subtotal + shipping - discount;
 
   const validateAddress = () => {
-    if (addressMode === 'saved' && selectedAddressId) return {};
     const errors = {};
+    if (addressMode === 'saved' && selectedAddressId) {
+      if (!orderEmail || !/\S+@\S+\.\S+/.test(orderEmail)) errors.email = 'Valid email is required for order updates';
+      return errors;
+    }
     if (!newAddress.email || !/\S+@\S+\.\S+/.test(newAddress.email)) errors.email = 'Valid email is required';
     if (!newAddress.name?.trim()) errors.name = 'Name is required';
     if (!newAddress.phone || !/^\d{10}$/.test(newAddress.phone.replace(/\D/g, ''))) errors.phone = 'Valid 10-digit phone required';
@@ -147,11 +151,7 @@ export default function CheckoutPage() {
     return errors;
   };
 
-  const validatePayment = () => {
-    if (selectedPayment === 'upi' && !upiId.includes('@')) return false;
-    if (selectedPayment === 'card' && cardDetails.number?.length < 16) return false;
-    return true;
-  };
+  const validatePayment = () => true;
 
   const nextStep = () => {
     if (currentStep === 0 && items.length > 0) {
@@ -181,7 +181,22 @@ export default function CheckoutPage() {
     }
   };
 
-  const placeOrder = () => {
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(window.Razorpay);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve(window.Razorpay);
+      script.onerror = () => resolve(null);
+      document.body.appendChild(script);
+    });
+  };
+
+  const placeOrder = async () => {
     const addressErrors = validateAddress();
     if (Object.keys(addressErrors).length > 0) {
       setFormErrors(addressErrors);
@@ -192,9 +207,106 @@ export default function CheckoutPage() {
       toast.error('Please complete payment details');
       return;
     }
-    const orderId = `ORD-${Date.now()}`;
-    clearCart();
-    router.push(`/order-confirmation/${orderId}`);
+
+    const addr = getShippingAddress();
+    if (!addr || !addr.name || !addr.email) {
+      toast.error('Please provide name and email');
+      return;
+    }
+
+    const orderPayload = {
+      items: items.map((it) => ({
+        product: {
+          id: it.product?.id,
+          name: it.product?.name,
+          price: it.product?.price,
+          images: it.product?.images,
+          thumbnail: it.product?.thumbnail,
+        },
+        quantity: it.quantity,
+      })),
+      shippingAddress: {
+        name: addr.name,
+        email: addr.email,
+        phone: addr.phone || '',
+        address: addr.address || addr.street || '',
+        city: addr.city || '',
+        state: addr.state || '',
+        pincode: addr.pincode || '',
+      },
+      paymentMethod: selectedPayment === 'cod' ? 'cod' : 'razorpay',
+      subtotal,
+      shippingCost: shipping,
+      discount,
+      total,
+      couponCode: appliedPromo || null,
+      isGift,
+      giftMessage: isGift ? giftMessage : null,
+    };
+
+    setIsPlacingOrder(true);
+    try {
+      const res = await checkoutApi.createOrder(orderPayload);
+
+      if (res.paymentStatus === 'cod') {
+        clearCart();
+        toast.success('Order placed! Pay on delivery.');
+        router.push(`/checkout/success?orderNumber=${encodeURIComponent(res.orderNumber)}`);
+        return;
+      }
+
+      if (!res.razorpayOrderId || !res.razorpayKeyId) {
+        toast.error('Payment gateway not configured');
+        setIsPlacingOrder(false);
+        return;
+      }
+
+      const Razorpay = await loadRazorpayScript();
+      if (!Razorpay) {
+        toast.error('Payment failed to load. Please try again.');
+        setIsPlacingOrder(false);
+        return;
+      }
+
+      const options = {
+        key: res.razorpayKeyId,
+        amount: res.razorpayAmount,
+        currency: res.razorpayCurrency || 'INR',
+        name: 'Anushthanum',
+        description: `Order ${res.orderNumber}`,
+        order_id: res.razorpayOrderId,
+        handler: async (response) => {
+          try {
+            await checkoutApi.verifyPayment({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            clearCart();
+            toast.success('Payment successful!');
+            router.push(`/checkout/success?orderNumber=${encodeURIComponent(res.orderNumber)}`);
+          } catch (e) {
+            toast.error(e?.message || 'Payment verification failed');
+            router.push(`/checkout/failure?orderNumber=${encodeURIComponent(res.orderNumber)}`);
+          } finally {
+            setIsPlacingOrder(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            toast.error('Payment cancelled');
+            router.push(`/checkout/failure?orderNumber=${encodeURIComponent(res.orderNumber)}`);
+            setIsPlacingOrder(false);
+          },
+        },
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+    } catch (e) {
+      toast.error(e?.message || 'Failed to place order');
+      setIsPlacingOrder(false);
+    }
   };
 
   const canProceedFromCart = () => items.length > 0;
@@ -342,15 +454,22 @@ export default function CheckoutPage() {
                       {savedAddresses.length > 0 && addressMode === 'saved' && !showAddressOptions && (() => {
                         const selectedAddr = savedAddresses.find((a) => a.id === selectedAddressId);
                         return selectedAddr ? (
-                          <div className="p-4 rounded-xl border-2 border-primary bg-primary/5">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <Check className="w-4 h-4 text-primary" />
-                              <span className="font-medium">{selectedAddr.name}</span>
-                              {selectedAddr.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
+                          <div className="space-y-3">
+                            <div className="p-4 rounded-xl border-2 border-primary bg-primary/5">
+                              <div className="flex items-center gap-2 flex-wrap mb-1">
+                                <Check className="w-4 h-4 text-primary" />
+                                <span className="font-medium">{selectedAddr.name}</span>
+                                {selectedAddr.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{selectedAddr.address}</p>
+                              <p className="text-sm text-muted-foreground">{selectedAddr.city}, {selectedAddr.state} - {selectedAddr.pincode}</p>
+                              <p className="text-sm text-muted-foreground mt-1">📞 {selectedAddr.phone}</p>
                             </div>
-                            <p className="text-sm text-muted-foreground">{selectedAddr.address}</p>
-                            <p className="text-sm text-muted-foreground">{selectedAddr.city}, {selectedAddr.state} - {selectedAddr.pincode}</p>
-                            <p className="text-sm text-muted-foreground mt-1">📞 {selectedAddr.phone}</p>
+                            <div>
+                              <Label>Email for order updates <span className="text-destructive">*</span></Label>
+                              <Input type="email" value={orderEmail} onChange={(e) => setOrderEmail(e.target.value)} placeholder="your@email.com" className={formErrors.email ? 'border-destructive mt-1' : 'mt-1'} />
+                              {formErrors.email && <p className="text-xs text-destructive mt-1">{formErrors.email}</p>}
+                            </div>
                           </div>
                         ) : null;
                       })()}
@@ -485,41 +604,21 @@ export default function CheckoutPage() {
                     <CardContent>
                       <RadioGroup value={selectedPayment} onValueChange={setSelectedPayment} className="space-y-3">
                         {paymentMethods.map((method) => (
-                          <div key={method.id}>
-                            <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${selectedPayment === method.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
-                              <RadioGroupItem value={method.id} />
-                              <span className="text-2xl">{method.icon}</span>
-                              <div className="flex-1">
-                                <p className="font-medium">{method.name}</p>
-                                <p className="text-sm text-muted-foreground">{method.description}</p>
-                              </div>
-                              {method.id === 'cod' && <Badge variant="secondary">Popular</Badge>}
-                            </label>
-                            {selectedPayment === 'upi' && method.id === 'upi' && (
-                              <div className="mt-3 ml-12 p-4 bg-muted/50 rounded-lg">
-                                <Label>UPI ID</Label>
-                                <Input value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="yourname@upi" className="mt-1" />
-                              </div>
+                          <label
+                            key={method.id}
+                            className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors ${selectedPayment === method.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}
+                          >
+                            <RadioGroupItem value={method.id} />
+                            <span className="text-2xl">{method.icon}</span>
+                            <div className="flex-1">
+                              <p className="font-medium">{method.name}</p>
+                              <p className="text-sm text-muted-foreground">{method.description}</p>
+                            </div>
+                            {method.id === 'cod' && <Badge variant="secondary">Popular</Badge>}
+                            {method.id === 'online' && (
+                              <Badge variant="outline" className="text-xs">Razorpay</Badge>
                             )}
-                            {selectedPayment === 'card' && method.id === 'card' && (
-                              <div className="mt-3 ml-12 p-4 bg-muted/50 rounded-lg space-y-3">
-                                <div>
-                                  <Label>Card Number</Label>
-                                  <Input value={cardDetails.number} onChange={(e) => setCardDetails({ ...cardDetails, number: e.target.value.replace(/\D/g, '').slice(0, 16) })} placeholder="1234 5678 9012 3456" className="mt-1" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <Label>Expiry</Label>
-                                    <Input value={cardDetails.expiry} onChange={(e) => setCardDetails({ ...cardDetails, expiry: e.target.value })} placeholder="MM/YY" className="mt-1" />
-                                  </div>
-                                  <div>
-                                    <Label>CVV</Label>
-                                    <Input type="password" value={cardDetails.cvv} onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })} placeholder="***" className="mt-1" />
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                          </label>
                         ))}
                       </RadioGroup>
                       <div className="flex items-center gap-2 mt-6 p-3 bg-accent/10 rounded-lg">
@@ -543,9 +642,9 @@ export default function CheckoutPage() {
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
-                <Button onClick={placeOrder} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Button onClick={placeOrder} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isPlacingOrder}>
                   <Lock className="w-4 h-4 mr-2" />
-                  Place Order - {formatPrice(total)}
+                  {isPlacingOrder ? 'Processing...' : `Place Order - ${formatPrice(total)}`}
                 </Button>
               )}
             </div>
