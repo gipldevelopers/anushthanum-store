@@ -33,23 +33,23 @@ function mapProductImages(product) {
   };
 }
 
-export default function PopularProductsSection() {
-  const [bestsellers, setBestsellers] = useState([]);
+export default function NewArrivalsSection() {
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProducts({ isBestseller: true, limit: 8, sort: 'popular' })
+    getProducts({ isNew: true, limit: 8, sort: 'newest' })
       .then((res) => {
         const list = res?.products ?? [];
-        setBestsellers(list.map(mapProductImages));
+        setProducts(list.map(mapProductImages));
       })
-      .catch(() => setBestsellers([]))
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading && bestsellers.length === 0) {
+  if (loading && products.length === 0) {
     return (
-      <section className="py-10 bg-warm-gradient">
+      <section className="py-10">
         <div className="container">
           <div className="flex justify-between items-end mb-6">
             <div className="h-8 bg-muted rounded w-48 animate-pulse" />
@@ -65,10 +65,10 @@ export default function PopularProductsSection() {
     );
   }
 
-  if (bestsellers.length === 0) return null;
+  if (products.length === 0) return null;
 
   return (
-    <section className="py-10 bg-warm-gradient">
+    <section className="py-10">
       <div className="container">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
           <div>
@@ -78,7 +78,7 @@ export default function PopularProductsSection() {
               viewport={{ once: true }}
               className="text-xs font-medium text-primary uppercase tracking-widest"
             >
-              Customer Favorites
+              Just Arrived
             </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
@@ -87,7 +87,7 @@ export default function PopularProductsSection() {
               transition={{ delay: 0.1 }}
               className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold mt-2"
             >
-              Bestselling Products
+              New Arrivals
             </motion.h2>
           </div>
           <motion.div
@@ -97,15 +97,15 @@ export default function PopularProductsSection() {
             transition={{ delay: 0.2 }}
           >
             <Button variant="outline" asChild className="group border-border">
-              <Link href="/bestsellers">
-                View All
+              <Link href="/new-arrivals">
+                View All New
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </Button>
           </motion.div>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {bestsellers.slice(0, 4).map((product, index) => (
+          {products.slice(0, 4).map((product, index) => (
             <ProductCard key={product.id} product={product} index={index} />
           ))}
         </div>

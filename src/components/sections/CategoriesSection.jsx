@@ -1,41 +1,61 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { getCategories } from '@/services/categoryApi';
 
-const categories = [
-  {
-    name: 'Rudraksha',
-    slug: 'rudraksha',
-    image: '/images/categories/rudraksha-category.jpg',
-    description: 'Sacred beads for spiritual awakening',
-    count: 45,
-  },
-  {
-    name: 'Yantra',
-    slug: 'yantra',
-    image: '/images/categories/yantra-category.jpg',
-    description: 'Divine geometry for prosperity',
-    count: 28,
-  },
-  {
-    name: 'Bracelets',
-    slug: 'bracelets',
-    image: '/images/categories/bracelets-category.jpg',
-    description: 'Spiritual wearables for protection',
-    count: 36,
-  },
-  {
-    name: 'Crystals',
-    slug: 'crystals',
-    image: '/images/categories/crystals-category.jpg',
-    description: 'Healing stones for energy balance',
-    count: 52,
-  },
-];
+const UPLOAD_BASE = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_SERVER_URL || process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || '')
+  : '';
+
+function toFullImageUrl(path) {
+  if (!path) return '/placeholder.svg';
+  if (path.startsWith('http')) return path;
+  return path.startsWith('/') ? `${UPLOAD_BASE}${path}` : `${UPLOAD_BASE}/${path}`;
+}
 
 export default function CategoriesSection() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCategories({ showInShopSection: true })
+      .then((res) => {
+        const list = res?.categories ?? [];
+        setCategories(list.map((c) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          image: toFullImageUrl(c.image),
+          description: c.description || 'Explore our collection',
+        })));
+      })
+      .catch(() => setCategories([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading && categories.length === 0) {
+    return (
+      <section className="py-10">
+        <div className="container">
+          <div className="text-center mb-6 md:mb-8">
+            <div className="h-4 bg-muted rounded w-32 mx-auto mb-2" />
+            <div className="h-8 bg-muted rounded w-64 mx-auto mb-4" />
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-64 md:h-80 rounded-xl bg-muted animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (categories.length === 0) return null;
+
   return (
     <section className="py-10">
       <div className="container">
@@ -68,7 +88,7 @@ export default function CategoriesSection() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {categories.map((category, index) => (
             <motion.div
-              key={category.slug}
+              key={category.id ?? category.slug}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -86,9 +106,11 @@ export default function CategoriesSection() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/30 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
-                  <span className="text-[10px] md:text-xs text-background/70 uppercase tracking-wider">
-                    {category.count} Products
-                  </span>
+                  {category.productCount != null && (
+                    <span className="text-[10px] md:text-xs text-background/70 uppercase tracking-wider">
+                      {category.productCount} Products
+                    </span>
+                  )}
                   <h3 className="text-lg md:text-xl font-serif font-bold text-background mt-0.5 mb-1 group-hover:text-primary transition-colors">
                     {category.name}
                   </h3>

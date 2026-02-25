@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Menu,
   BookOpen,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { label: 'Categories', href: '/admin/categories', icon: FolderTree },
   { label: 'Sub-Categories', href: '/admin/subcategories', icon: Layers },
   { label: 'Sub-Sub-Categories', href: '/admin/subsubcategories', icon: FolderOpen },
+  { label: 'Filter Attributes', href: '/admin/filter-attributes', icon: SlidersHorizontal },
   { label: 'Products', href: '/admin/products', icon: Package },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { label: 'Blog Posts', href: '/admin/blogs', icon: BookOpen },

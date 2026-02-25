@@ -143,6 +143,25 @@ export const mediaApi = {
   delete: (id) => adminApi.delete(`/admin/media/${id}`).then(handleResponse).catch(handleError),
 };
 
+export const filterAttributesApi = {
+  getAll: () =>
+    adminApi.get('/admin/filter-attributes').then(handleResponse).catch(handleError),
+  getById: (id) =>
+    adminApi.get(`/admin/filter-attributes/${id}`).then(handleResponse).catch(handleError),
+  createCategory: (data) =>
+    adminApi.post('/admin/filter-attributes', data).then(handleResponse).catch(handleError),
+  updateCategory: (id, data) =>
+    adminApi.put(`/admin/filter-attributes/${id}`, data).then(handleResponse).catch(handleError),
+  deleteCategory: (id) =>
+    adminApi.delete(`/admin/filter-attributes/${id}`).then(handleResponse).catch(handleError),
+  createAttribute: (data) =>
+    adminApi.post('/admin/filter-attributes/attributes', data).then(handleResponse).catch(handleError),
+  updateAttribute: (id, data) =>
+    adminApi.put(`/admin/filter-attributes/attributes/${id}`, data).then(handleResponse).catch(handleError),
+  deleteAttribute: (id) =>
+    adminApi.delete(`/admin/filter-attributes/attributes/${id}`).then(handleResponse).catch(handleError),
+};
+
 export const contentApi = {
   getHomepageSections: () =>
     adminApi.get('/admin/content/homepage').then(handleResponse).catch(handleError),

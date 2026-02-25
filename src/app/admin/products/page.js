@@ -64,7 +64,7 @@ export default function AdminProductsPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const data = await categoriesApi.getAll({ type: 'main' });
+      const data = await categoriesApi.getAll();
       setCategories(data?.categories ?? []);
     } catch {
       setCategories([]);

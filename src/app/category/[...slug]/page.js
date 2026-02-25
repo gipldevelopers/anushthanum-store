@@ -35,6 +35,7 @@ import CategoryFilter from '@/components/sections/CategoryFilter';
 import ProductCard from '@/components/ui/ProductCard';
 import { getCategories } from '@/services/categoryApi';
 import { getProducts } from '@/services/productApi';
+import { getFilterCategories } from '@/services/filterAttributeApi';
 import { useState, useEffect, useMemo } from 'react';
 
 const UPLOAD_BASE = typeof window !== 'undefined'
@@ -66,22 +67,6 @@ const sortOptions = [
     { value: 'price-high', label: 'Price: High to Low' },
 ];
 
-const initialPurposes = [
-    { id: 'Health', label: 'Health' },
-    { id: 'Wealth', label: 'Wealth' },
-    { id: 'Peace', label: 'Peace' },
-    { id: 'Love', label: 'Love' },
-    { id: 'Protection', label: 'Protection' },
-    { id: 'Balance', label: 'Balance' },
-    { id: 'Courage', label: 'Courage' },
-];
-
-
-
-const initialBeads = ['Rudraksha', 'Karungali', 'Pyrite', 'Sphatik', 'Rose Quartz', 'Tiger Eye', 'Lava', 'Amethyst', 'Sandalwood', 'Tulsi'].map((b) => ({ id: b, label: b }));
-const initialMukhis = ['1 - Ek', '2 - Do', '3 - Teen', '4 - Chaar', '5 - Paanch', '6 - Chhey', '7 - Saat', '8 - Aath', '9 - Nau', '10 - Das', '11 - Gyaarah', '12 - Baarah', '13 - Terah', '14 - Chaudah', 'Ganesh', 'Gauri Shankar'].map((m) => ({ id: m, label: m }));
-const initialPlatings = ['Silver', 'Gold', 'DuoTone'].map((p) => ({ id: p, label: p }));
-
 export default function CategoryPage() {
     const params = useParams();
     const slugArray = params?.slug || [];
@@ -90,6 +75,7 @@ export default function CategoryPage() {
     const subSubCategorySlug = slugArray[2] || '';
 
     const [categories, setCategories] = useState([]);
+    const [filterCategories, setFilterCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -101,14 +87,17 @@ export default function CategoryPage() {
             .catch(() => setCategories([]));
     }, []);
 
+    useEffect(() => {
+        getFilterCategories()
+            .then((res) => setFilterCategories(res?.filterCategories || []))
+            .catch(() => setFilterCategories([]));
+    }, []);
+
     const [viewMode, setViewMode] = useState('grid');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const [priceRange, setPriceRange] = useState([0, 500000]);
-    const [selectedPurposes, setSelectedPurposes] = useState([]);
-    const [selectedBeads, setSelectedBeads] = useState([]);
-    const [selectedMukhis, setSelectedMukhis] = useState([]);
-    const [selectedPlatings, setSelectedPlatings] = useState([]);
+    const [selectedFilters, setSelectedFilters] = useState({});
     const [sortBy, setSortBy] = useState('popular');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 12;
@@ -145,14 +134,14 @@ export default function CategoryPage() {
             subSubCategorySlug: subSubCategorySlug || undefined,
             minPrice: priceRange[0] || undefined,
             maxPrice: priceRange[1] < 500000 ? priceRange[1] : undefined,
-            purposes: selectedPurposes.length ? selectedPurposes.join(',') : undefined,
-            beads: selectedBeads.length ? selectedBeads.join(',') : undefined,
-            mukhis: selectedMukhis.length ? selectedMukhis.join(',') : undefined,
-            platings: selectedPlatings.length ? selectedPlatings.join(',') : undefined,
             sort: sortBy,
             page: currentPage,
             limit: itemsPerPage,
         };
+        filterCategories.forEach((cat) => {
+            const vals = selectedFilters[cat.slug];
+            if (vals?.length) params[cat.slug] = vals.join(',');
+        });
         getProducts(params)
             .then((res) => {
                 const list = (res?.products || []).map(mapProductImages);
@@ -166,47 +155,30 @@ export default function CategoryPage() {
                 setTotalPages(0);
             })
             .finally(() => setIsLoading(false));
-    }, [categorySlug, subCategorySlug, subSubCategorySlug, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy, currentPage]);
+    }, [categorySlug, subCategorySlug, subSubCategorySlug, priceRange, selectedFilters, filterCategories, sortBy, currentPage]);
 
-    const availablePurposes = useMemo(() => {
-        const counts = {};
-        initialPurposes.forEach((p) => (counts[p.id] = 0));
-        products.forEach((p) => {
-            const arr = p.filterAttributes?.purposes || [];
-            arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
+    const filterGroups = useMemo(() => {
+        return filterCategories.map((cat) => {
+            const counts = {};
+            (cat.attributes || []).forEach((a) => (counts[a.name] = 0));
+            products.forEach((p) => {
+                const arr = p.filterAttributes?.[cat.slug] || [];
+                arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
+            });
+            const options = (cat.attributes || []).map((a) => ({
+                id: a.name,
+                label: a.name,
+                count: counts[a.name] || 0,
+            }));
+            return {
+                slug: cat.slug,
+                name: cat.name,
+                options,
+                selected: selectedFilters[cat.slug] || [],
+                onSelect: (vals) => setSelectedFilters((prev) => ({ ...prev, [cat.slug]: vals })),
+            };
         });
-        return initialPurposes.map((p) => ({ ...p, count: counts[p.id] || 0 }));
-    }, [products]);
-
-    const availableBeads = useMemo(() => {
-        const counts = {};
-        initialBeads.forEach((b) => (counts[b.id] = 0));
-        products.forEach((p) => {
-            const arr = p.filterAttributes?.beads || [];
-            arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
-        });
-        return initialBeads.map((b) => ({ ...b, count: counts[b.id] || 0 })).filter((b) => b.count > 0);
-    }, [products]);
-
-    const availableMukhis = useMemo(() => {
-        const counts = {};
-        initialMukhis.forEach((m) => (counts[m.id] = 0));
-        products.forEach((p) => {
-            const arr = p.filterAttributes?.mukhis || [];
-            arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
-        });
-        return initialMukhis.map((m) => ({ ...m, count: counts[m.id] || 0 })).filter((m) => m.count > 0);
-    }, [products]);
-
-    const availablePlatings = useMemo(() => {
-        const counts = {};
-        initialPlatings.forEach((p) => (counts[p.id] = 0));
-        products.forEach((p) => {
-            const arr = p.filterAttributes?.platings || [];
-            arr.forEach((v) => { if (counts[v] !== undefined) counts[v]++; });
-        });
-        return initialPlatings.map((p) => ({ ...p, count: counts[p.id] || 0 }));
-    }, [products]);
+    }, [filterCategories, products, selectedFilters]);
 
     const paginatedProducts = products;
 
@@ -219,24 +191,18 @@ export default function CategoryPage() {
     // Reset pagination when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [categorySlug, subCategorySlug, subSubCategorySlug, priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings, sortBy]);
+    }, [categorySlug, subCategorySlug, subSubCategorySlug, priceRange, selectedFilters, sortBy]);
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
         if (priceRange[0] > 0 || priceRange[1] < 500000) count++;
-        if (selectedPurposes.length > 0) count++;
-        if (selectedBeads.length > 0) count++;
-        if (selectedMukhis.length > 0) count++;
-        if (selectedPlatings.length > 0) count++;
+        Object.values(selectedFilters || {}).forEach((arr) => { if (arr?.length) count++; });
         return count;
-    }, [priceRange, selectedPurposes, selectedBeads, selectedMukhis, selectedPlatings]);
+    }, [priceRange, selectedFilters]);
 
     const clearFilters = () => {
         setPriceRange([0, 500000]);
-        setSelectedPurposes([]);
-        setSelectedBeads([]);
-        setSelectedMukhis([]);
-        setSelectedPlatings([]);
+        setSelectedFilters({});
         setIsFilterOpen(false);
     };
 
@@ -384,15 +350,7 @@ export default function CategoryPage() {
                             <CategoryFilter
                                 priceRange={priceRange}
                                 setPriceRange={setPriceRange}
-                                selectedPurposes={selectedPurposes}
-                                setSelectedPurposes={setSelectedPurposes}
-                                availablePurposes={availablePurposes}
-                                selectedBeads={selectedBeads}
-                                setSelectedBeads={setSelectedBeads}
-                                availableBeads={availableBeads}
-                                selectedMukhis={selectedMukhis}
-                                setSelectedMukhis={setSelectedMukhis}
-                                availableMukhis={availableMukhis}
+                                filterGroups={filterGroups}
                                 clearFilters={clearFilters}
                                 activeFilterCount={activeFilterCount}
                             />
@@ -430,18 +388,7 @@ export default function CategoryPage() {
                                             <CategoryFilter
                                                 priceRange={priceRange}
                                                 setPriceRange={setPriceRange}
-                                                selectedPurposes={selectedPurposes}
-                                                setSelectedPurposes={setSelectedPurposes}
-                                                availablePurposes={availablePurposes}
-                                                selectedBeads={selectedBeads}
-                                                setSelectedBeads={setSelectedBeads}
-                                                availableBeads={availableBeads}
-                                                selectedMukhis={selectedMukhis}
-                                                setSelectedMukhis={setSelectedMukhis}
-                                                availableMukhis={availableMukhis}
-                                                selectedPlatings={selectedPlatings}
-                                                setSelectedPlatings={setSelectedPlatings}
-                                                availablePlatings={availablePlatings}
+                                                filterGroups={filterGroups}
                                                 clearFilters={clearFilters}
                                                 activeFilterCount={activeFilterCount}
                                             />

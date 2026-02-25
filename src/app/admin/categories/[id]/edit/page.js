@@ -39,6 +39,7 @@ export default function EditCategoryPage() {
     image: '',
     type: 'main',
     status: 'active',
+    showInShopSection: false,
     sortOrder: 0,
   });
   const [uploading, setUploading] = useState(false);
@@ -91,6 +92,7 @@ export default function EditCategoryPage() {
           image: cat.image ?? '',
           type: cat.type ?? 'main',
           status: cat.status ?? 'active',
+          showInShopSection: !!cat.showInShopSection,
           sortOrder: cat.sortOrder ?? 0,
         });
       } catch (e) {
@@ -117,6 +119,7 @@ export default function EditCategoryPage() {
         image: formData.image?.trim() || null,
         type: formData.type,
         status: formData.status,
+        showInShopSection: !!formData.showInShopSection,
         sortOrder: Number(formData.sortOrder) ?? 0,
       });
       toast.success('Category updated successfully.');
@@ -195,6 +198,16 @@ export default function EditCategoryPage() {
                   value={formData.sortOrder}
                   onChange={(e) => setFormData((prev) => ({ ...prev, sortOrder: e.target.value }))}
                 />
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="showInShopSection"
+                  checked={!!formData.showInShopSection}
+                  onCheckedChange={(c) => setFormData((prev) => ({ ...prev, showInShopSection: c }))}
+                />
+                <Label htmlFor="showInShopSection">Show in &quot;Shop by Category&quot; section on homepage</Label>
               </div>
             </div>
             <div className="space-y-2">

@@ -36,6 +36,7 @@ export default function NewCategoryPage() {
     image: '',
     type: 'main',
     status: 'active',
+    showInShopSection: false,
     sortOrder: 0,
   });
   const [uploading, setUploading] = useState(false);
@@ -89,6 +90,7 @@ export default function NewCategoryPage() {
         image: formData.image?.trim() || null,
         type: formData.type,
         status: formData.status,
+        showInShopSection: !!formData.showInShopSection,
         sortOrder: Number(formData.sortOrder) || 0,
       };
       await categoriesApi.create(payload);
@@ -161,6 +163,16 @@ export default function NewCategoryPage() {
                   value={formData.sortOrder}
                   onChange={(e) => setFormData((prev) => ({ ...prev, sortOrder: e.target.value }))}
                 />
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="showInShopSection"
+                  checked={!!formData.showInShopSection}
+                  onCheckedChange={(c) => setFormData((prev) => ({ ...prev, showInShopSection: c }))}
+                />
+                <Label htmlFor="showInShopSection">Show in &quot;Shop by Category&quot; section on homepage</Label>
               </div>
             </div>
             <div className="space-y-2">

@@ -1,66 +1,89 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { getCategories } from '@/services/categoryApi';
 
-const items = [
-  { 
-    id: 1, 
-    label: 'Rudraksha', 
-    image: '/images/products/5 mukhi rudraksha.png',
-    href: '/category/rudraksha' 
-  },
-  { 
-    id: 2, 
-    label: 'Karungali', 
-    image: '/images/products/Karungali Mala.png',
-    href: '/category/karungali' 
-  },
-  { 
-    id: 3, 
-    label: 'Pyrite', 
-    image: '/images/products/crystal-quartz.jpg', // Placeholder
-    href: '/category/crystals' 
-  },
-  { 
-    id: 4, 
-    label: 'Sandalwood', 
-    image: '/images/products/sandalwood1.png',
-    href: '/category/malas' 
-  },
-  { 
-    id: 5, 
-    label: 'Sphatik', 
-    image: '/images/products/Rudraksha-Sphatik Mala.png',
-    href: '/category/malas' 
-  },
-  { 
-    id: 6, 
-    label: 'Tiger Eye', 
-    image: '/images/products/bracelet-tiger-eye.jpg',
-    href: '/category/bracelets' 
-  },
-  { 
-    id: 7, 
-    label: 'Rose Quartz', 
-    image: '/images/products/crystal-amethyst.jpg', // Placeholder
-    href: '/category/crystals' 
-  },
-  { 
-    id: 8, 
-    label: 'Amethyst', 
-    image: '/images/products/crystal-amethyst.jpg',
-    href: '/category/crystals' 
-  }
-];
+const UPLOAD_BASE = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_SERVER_URL || process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || '')
+  : '';
+
+function toFullImageUrl(path) {
+  if (!path) return '/placeholder.svg';
+  if (path.startsWith('http')) return path;
+  return path.startsWith('/') ? `${UPLOAD_BASE}${path}` : `${UPLOAD_BASE}/${path}`;
+}
 
 export default function QuickAccessSection() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCategories({ type: 'material' })
+      .then((res) => {
+        const list = res?.categories ?? [];
+        if (list.length > 0) {
+          setItems(list.map((c) => ({
+            id: c.id,
+            label: c.name,
+            image: toFullImageUrl(c.image) || '/placeholder.svg',
+            slug: c.slug,
+          })));
+        } else {
+          getCategories({ type: 'main' }).then((r) => {
+            const mainList = r?.categories ?? [];
+            setItems(mainList.map((c) => ({
+              id: c.id,
+              label: c.name,
+              image: toFullImageUrl(c.image) || '/placeholder.svg',
+              slug: c.slug,
+            })));
+          }).catch(() => setItems([]));
+        }
+      })
+      .catch(() => {
+        getCategories({ type: 'main' })
+          .then((r) => {
+            const mainList = r?.categories ?? [];
+            setItems(mainList.map((c) => ({
+              id: c.id,
+              label: c.name,
+              image: toFullImageUrl(c.image) || '/placeholder.svg',
+              slug: c.slug,
+            })));
+          })
+          .catch(() => setItems([]));
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const displayItems = items.map((item) => ({
+    ...item,
+    href: item.href ?? `/category/${item.slug}`,
+  }));
+
+  if (loading && displayItems.length === 0) {
+    return (
+      <section className="py-8 bg-background border-b">
+        <div className="container">
+          <div className="flex justify-center gap-4 py-4">
+            <div className="h-20 w-20 rounded-full bg-muted animate-pulse" />
+            <div className="h-20 w-20 rounded-full bg-muted animate-pulse" />
+            <div className="h-20 w-20 rounded-full bg-muted animate-pulse" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (displayItems.length === 0) return null;
+
   return (
     <section className="py-8 bg-background border-b">
       <div className="container">
         <div className="flex overflow-x-auto pb-4 pt-2 gap-4 md:gap-8 lg:justify-center no-scrollbar scroll-smooth">
-          {items.map((item, index) => (
+          {displayItems.map((item, index) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 20 }}
@@ -70,11 +93,11 @@ export default function QuickAccessSection() {
             >
               <Link href={item.href} className="flex flex-col items-center group gap-3">
                 <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-transparent group-hover:border-primary transition-all duration-300 shadow-sm bg-muted/30">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={item.image}
                     alt={item.label}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 </div>
                 <span className="text-xs md:text-sm font-medium text-center text-foreground/80 group-hover:text-primary transition-colors">

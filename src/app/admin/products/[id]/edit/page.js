@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Loader2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { productsApi, categoriesApi, subCategoriesApi, subSubCategoriesApi, uploadApi } from '@/services/adminApi';
+import { productsApi, categoriesApi, subCategoriesApi, subSubCategoriesApi, uploadApi, filterAttributesApi } from '@/services/adminApi';
 
 const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
@@ -22,11 +22,6 @@ function imageSrc(url) {
   if (url.startsWith('http') || url.startsWith('//')) return url;
   return API_ORIGIN ? `${API_ORIGIN}${url}` : url;
 }
-
-const PURPOSE_OPTIONS = ['Health', 'Wealth', 'Peace', 'Love', 'Protection', 'Balance', 'Courage'];
-const BEAD_OPTIONS = ['Rudraksha', 'Karungali', 'Pyrite', 'Sphatik', 'Rose Quartz', 'Tiger Eye', 'Lava', 'Amethyst', 'Sandalwood', 'Tulsi'];
-const MUKHI_OPTIONS = ['1 - Ek', '2 - Do', '3 - Teen', '4 - Chaar', '5 - Paanch', '6 - Chhey', '7 - Saat', '8 - Aath', '9 - Nau', '10 - Das', '11 - Gyaarah', '12 - Baarah', '13 - Terah', '14 - Chaudah', 'Ganesh', 'Gauri Shankar'];
-const PLATING_OPTIONS = ['Silver', 'Gold', 'DuoTone'];
 
 const textToArray = (s) => (typeof s === 'string' ? s.split('\n').map((x) => x.trim()).filter(Boolean) : Array.isArray(s) ? s : []);
 const arrayToText = (arr) => (Array.isArray(arr) ? arr.join('\n') : '');
@@ -45,6 +40,7 @@ export default function EditProductPage() {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [subSubCategories, setSubSubCategories] = useState([]);
+  const [filterCategories, setFilterCategories] = useState([]);
   const [form, setForm] = useState({
     name: '',
     slug: '',
@@ -63,7 +59,7 @@ export default function EditProductPage() {
     benefits: '',
     whoShouldWear: '',
     wearingRules: '',
-    filterAttributes: { purposes: [], beads: [], mukhis: [], platings: [] },
+    filterAttributes: {},
     isFeatured: false,
     isBestseller: false,
     isNew: false,
@@ -116,7 +112,11 @@ export default function EditProductPage() {
   }, [id]);
 
   useEffect(() => {
-    categoriesApi.getAll({ type: 'main' }).then((d) => setCategories(d?.categories ?? [])).catch(() => setCategories([]));
+    categoriesApi.getAll().then((d) => setCategories(d?.categories ?? [])).catch(() => setCategories([]));
+  }, []);
+
+  useEffect(() => {
+    filterAttributesApi.getAll().then((d) => setFilterCategories(d?.filterCategories ?? [])).catch(() => setFilterCategories([]));
   }, []);
 
   useEffect(() => {
@@ -361,42 +361,65 @@ export default function EditProductPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>Display &amp; Status</CardTitle>
+            <CardDescription>Control where this product appears on the website</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-6">
+              <div className="flex items-center gap-2">
+                <Switch checked={form.isFeatured} onCheckedChange={(c) => setForm((p) => ({ ...p, isFeatured: c }))} />
+                <Label>Featured</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={form.isBestseller} onCheckedChange={(c) => setForm((p) => ({ ...p, isBestseller: c }))} />
+                <Label>Bestseller</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={form.isNew} onCheckedChange={(c) => setForm((p) => ({ ...p, isNew: c }))} />
+                <Label>New Arrivals</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={form.status === 'active'} onCheckedChange={(c) => setForm((p) => ({ ...p, status: c ? 'active' : 'draft' }))} />
+                <Label>Active</Label>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Sort order</Label>
+              <Input type="number" min={0} value={form.sortOrder} onChange={(e) => setForm((p) => ({ ...p, sortOrder: e.target.value }))} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Filter Attributes</CardTitle>
-            <CardDescription>Used for category page filters</CardDescription>
+            <CardDescription>Used for category page filters. Manage categories in Admin → Filter Attributes.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div>
-              <Label className="mb-2 block">Purpose</Label>
-              <div className="flex flex-wrap gap-2">
-                {PURPOSE_OPTIONS.map((v) => (
-                  <Button key={v} type="button" variant={form.filterAttributes?.purposes?.includes(v) ? 'default' : 'outline'} size="sm" onClick={() => toggleFilter('purposes', v)}>{v}</Button>
-                ))}
+            {filterCategories.map((cat) => (
+              <div key={cat.id}>
+                <Label className="mb-2 block">{cat.name}</Label>
+                <div className="flex flex-wrap gap-2">
+                  {(cat.attributes ?? []).map((attr) => (
+                    <Button
+                      key={attr.id}
+                      type="button"
+                      variant={form.filterAttributes?.[cat.slug]?.includes(attr.name) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => toggleFilter(cat.slug, attr.name)}
+                    >
+                      {attr.name}
+                    </Button>
+                  ))}
+                  {(!cat.attributes || cat.attributes.length === 0) && (
+                    <span className="text-sm text-muted-foreground">No attributes. Add in Filter Attributes.</span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div>
-              <Label className="mb-2 block">Bead</Label>
-              <div className="flex flex-wrap gap-2">
-                {BEAD_OPTIONS.map((v) => (
-                  <Button key={v} type="button" variant={form.filterAttributes?.beads?.includes(v) ? 'default' : 'outline'} size="sm" onClick={() => toggleFilter('beads', v)}>{v}</Button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label className="mb-2 block">Mukhi</Label>
-              <div className="flex flex-wrap gap-2">
-                {MUKHI_OPTIONS.map((v) => (
-                  <Button key={v} type="button" variant={form.filterAttributes?.mukhis?.includes(v) ? 'default' : 'outline'} size="sm" onClick={() => toggleFilter('mukhis', v)}>{v}</Button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label className="mb-2 block">Plating</Label>
-              <div className="flex flex-wrap gap-2">
-                {PLATING_OPTIONS.map((v) => (
-                  <Button key={v} type="button" variant={form.filterAttributes?.platings?.includes(v) ? 'default' : 'outline'} size="sm" onClick={() => toggleFilter('platings', v)}>{v}</Button>
-                ))}
-              </div>
-            </div>
+            ))}
+            {filterCategories.length === 0 && (
+              <p className="text-sm text-muted-foreground">No filter categories. Add them in Admin → Filter Attributes.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -420,28 +443,6 @@ export default function EditProductPage() {
             <div className="space-y-2">
               <Label>Tags (one per line)</Label>
               <Textarea value={form.tags} onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))} rows={2} />
-            </div>
-            <div className="flex flex-wrap gap-6">
-              <div className="flex items-center gap-2">
-                <Switch checked={form.isFeatured} onCheckedChange={(c) => setForm((p) => ({ ...p, isFeatured: c }))} />
-                <Label>Featured</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.isBestseller} onCheckedChange={(c) => setForm((p) => ({ ...p, isBestseller: c }))} />
-                <Label>Bestseller</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.isNew} onCheckedChange={(c) => setForm((p) => ({ ...p, isNew: c }))} />
-                <Label>New</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.status === 'active'} onCheckedChange={(c) => setForm((p) => ({ ...p, status: c ? 'active' : 'draft' }))} />
-                <Label>Active</Label>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Sort order</Label>
-              <Input type="number" min={0} value={form.sortOrder} onChange={(e) => setForm((p) => ({ ...p, sortOrder: e.target.value }))} />
             </div>
           </CardContent>
         </Card>

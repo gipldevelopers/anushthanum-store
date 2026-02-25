@@ -1,75 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import ProductCard from '@/components/ui/ProductCard';
 import HeroCarousel from '@/components/sections/HeroCarousel';
 import QuickAccessSection from '@/components/sections/QuickAccessSection';
 import LearningJourneySection from '@/components/sections/LearningJourneySection';
 import CategoriesSection from '@/components/sections/CategoriesSection';
 import PopularProductsSection from '@/components/sections/PopularProductsSection';
+import NewArrivalsSection from '@/components/sections/NewArrivalsSection';
 import RecentlyViewedSection from '@/components/sections/RecentlyViewedSection';
 import GuidanceSection from '@/components/sections/GuidanceSection';
 import WhyChooseUsSection from '@/components/sections/WhyChooseUsSection';
 import TeamExpertsSection from '@/components/sections/TeamExpertsSection';
 import TestimonialsSection from '@/components/sections/TestimonialsSection';
 import BlogSection from '@/components/sections/BlogSection';
-import { getNewArrivals } from '@/data/products';
-
-function NewArrivalsSection() {
-  const newProducts = getNewArrivals();
-
-  return (
-    <section className="py-10">
-      <div className="container">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-          <div>
-            <motion.span
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-xs font-medium text-accent uppercase tracking-widest"
-            >
-              Just Arrived
-            </motion.span>
-            <motion.h2
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold mt-2"
-            >
-              New Arrivals
-            </motion.h2>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, x: 16 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
-            <Button variant="outline" asChild className="group border-border">
-              <Link href="/category/crystals">
-                View All New
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </Button>
-          </motion.div>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {newProducts.slice(0, 4).map((product, index) => (
-            <ProductCard key={product.id} product={product} index={index} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function NewsletterSection() {
   return (
     <section className="py-12 md:py-16">
