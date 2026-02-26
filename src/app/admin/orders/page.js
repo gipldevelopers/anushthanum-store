@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import adminApi from '@/lib/adminAxios';
 import { toast } from 'sonner';
 import {
   Search,
@@ -40,94 +41,6 @@ import {
   XCircle,
   Clock,
 } from 'lucide-react';
-
-const mockOrders = [
-  {
-    id: '1',
-    orderNumber: 'ORD-2024-1248',
-    customerId: 'c1',
-    customerName: 'Rahul Sharma',
-    customerEmail: 'rahul@example.com',
-    customerPhone: '9876543210',
-    shippingAddress: { name: 'Rahul Sharma', street: '123 MG Road', city: 'Mumbai', state: 'Maharashtra', pincode: '400001' },
-    items: [
-      { productId: '1', productName: '5 Mukhi Rudraksha', productImage: '/placeholder.svg', quantity: 2, price: 1499, total: 2998 },
-      { productId: '2', productName: 'Tiger Eye Bracelet', productImage: '/placeholder.svg', quantity: 1, price: 1299, total: 1299 },
-    ],
-    subtotal: 4297,
-    shippingCost: 99,
-    tax: 773,
-    total: 5169,
-    status: 'pending',
-    paymentMethod: 'UPI',
-    paymentStatus: 'paid',
-    createdAt: '2024-01-20T10:30:00Z',
-    updatedAt: '2024-01-20T10:30:00Z',
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-2024-1247',
-    customerId: 'c2',
-    customerName: 'Priya Patel',
-    customerEmail: 'priya@example.com',
-    customerPhone: '9876543211',
-    shippingAddress: { name: 'Priya Patel', street: '456 Park Street', city: 'Delhi', state: 'Delhi', pincode: '110001' },
-    items: [
-      { productId: '3', productName: 'Sri Yantra Pendant', productImage: '/placeholder.svg', quantity: 1, price: 5999, total: 5999 },
-    ],
-    subtotal: 5999,
-    shippingCost: 0,
-    tax: 1080,
-    total: 7079,
-    status: 'processing',
-    paymentMethod: 'Card',
-    paymentStatus: 'paid',
-    createdAt: '2024-01-19T15:45:00Z',
-    updatedAt: '2024-01-19T16:00:00Z',
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-2024-1246',
-    customerId: 'c3',
-    customerName: 'Amit Kumar',
-    customerEmail: 'amit@example.com',
-    customerPhone: '9876543212',
-    shippingAddress: { name: 'Amit Kumar', street: '789 Lake Road', city: 'Bangalore', state: 'Karnataka', pincode: '560001' },
-    items: [
-      { productId: '4', productName: 'Amethyst Crystal', productImage: '/placeholder.svg', quantity: 1, price: 2999, total: 2999 },
-    ],
-    subtotal: 2999,
-    shippingCost: 99,
-    tax: 540,
-    total: 3638,
-    status: 'shipped',
-    paymentMethod: 'COD',
-    paymentStatus: 'pending',
-    createdAt: '2024-01-18T09:20:00Z',
-    updatedAt: '2024-01-19T11:30:00Z',
-  },
-  {
-    id: '4',
-    orderNumber: 'ORD-2024-1245',
-    customerId: 'c4',
-    customerName: 'Sneha Reddy',
-    customerEmail: 'sneha@example.com',
-    customerPhone: '9876543213',
-    shippingAddress: { name: 'Sneha Reddy', street: '321 Hill View', city: 'Hyderabad', state: 'Telangana', pincode: '500001' },
-    items: [
-      { productId: '5', productName: '108 Bead Mala', productImage: '/placeholder.svg', quantity: 1, price: 3999, total: 3999 },
-    ],
-    subtotal: 3999,
-    shippingCost: 0,
-    tax: 720,
-    total: 4719,
-    status: 'delivered',
-    paymentMethod: 'UPI',
-    paymentStatus: 'paid',
-    createdAt: '2024-01-15T14:10:00Z',
-    updatedAt: '2024-01-18T16:45:00Z',
-  },
-];
 
 const statusConfig = {
   pending: { label: 'Pending', icon: Clock, variant: 'secondary' },
@@ -144,32 +57,53 @@ export default function AdminOrdersPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      setOrders(mockOrders);
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const response = await adminApi.get('/admin/orders', {
+        params: {
+          search: search || undefined,
+          status: filterStatus !== 'all' ? filterStatus : undefined,
+        },
+      });
+      if (response.data.success) {
+        setOrders(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Failed to fetch orders');
+    } finally {
       setLoading(false);
-    };
-    fetchOrders();
-  }, []);
-
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleStatusChange = (orderId, newStatus) => {
-    setOrders((prev) =>
-      prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
-    );
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
     }
-    toast.success('Order status updated');
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchOrders();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, filterStatus]);
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      const response = await adminApi.patch(`/admin/orders/${orderId}/status`, {
+        status: newStatus,
+      });
+      if (response.data.success) {
+        setOrders((prev) =>
+          prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
+        );
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+        }
+        toast.success('Order status updated');
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -211,7 +145,8 @@ export default function AdminOrdersPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
-            All Orders ({filteredOrders.length})
+            All Orders ({orders.length})
+
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -241,14 +176,15 @@ export default function AdminOrdersPage() {
                       <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                     </TableRow>
                   ))
-                ) : filteredOrders.length === 0 ? (
+                ) : orders.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No orders found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredOrders.map((order) => {
+                  orders.map((order) => {
+
                     const StatusIcon = statusConfig[order.status]?.icon ?? Clock;
                     const config = statusConfig[order.status] ?? { label: order.status, variant: 'secondary' };
                     return (
