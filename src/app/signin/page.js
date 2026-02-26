@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,10 @@ import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParams = searchParams.get('redirect');
+  const redirectPath = redirectParams || '/profile';
+  
   const { signIn, isAuthenticated } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,9 +33,9 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/profile');
+      router.replace(redirectPath);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, redirectPath]);
 
   if (isAuthenticated) {
     return (
@@ -48,7 +52,7 @@ export default function SignInPage() {
     setIsSubmitting(false);
     if (result.success) {
       toast.success('Welcome back!');
-      router.push('/profile');
+      router.push(redirectPath);
     } else {
       toast.error(result.error || 'Sign in failed.');
     }

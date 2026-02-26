@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Phone, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,10 @@ const OTP_LENGTH = 6;
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParams = searchParams.get('redirect');
+  const redirectPath = redirectParams || '/profile';
+  
   const { signUp, verifyOtp, resendOtp, isAuthenticated } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -48,9 +52,9 @@ export default function SignUpPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/profile');
+      router.replace(redirectPath);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, redirectPath]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -100,7 +104,7 @@ export default function SignUpPage() {
       setOtpInput('');
       setDevOtp('');
       toast.success('Account created! Welcome to Anushthanum.');
-      router.push('/profile');
+      router.push(redirectPath);
     } else {
       toast.error(result.error || 'Verification failed.');
     }

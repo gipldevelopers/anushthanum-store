@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -36,7 +37,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { accountApi } from '@/services/accountApi';
 import { checkoutApi } from '@/services/checkoutApi';
 
 const steps = [
@@ -58,38 +61,15 @@ const indianStates = [
   'Delhi', 'Jammu and Kashmir', 'Ladakh',
 ];
 
-const savedAddresses = [
-  {
-    id: 'addr1',
-    name: 'Rahul Sharma',
-    phone: '9876543210',
-    address: '123, Spiritual Heights, MG Road',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    pincode: '400001',
-    isDefault: true,
-  },
-  {
-    id: 'addr2',
-    name: 'Rahul Sharma',
-    phone: '9876543210',
-    address: '456, Divine Colony, Sector 15',
-    city: 'Gurgaon',
-    state: 'Haryana',
-    pincode: '122001',
-    isDefault: false,
-  },
-];
-
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [addressMode, setAddressMode] = useState(savedAddresses.length > 0 ? 'saved' : 'new');
-  const [selectedAddressId, setSelectedAddressId] = useState(
-    savedAddresses.find((a) => a.isDefault)?.id || savedAddresses[0]?.id || null
-  );
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [addressMode, setAddressMode] = useState('new');
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [showAddressOptions, setShowAddressOptions] = useState(false);
   const [newAddress, setNewAddress] = useState({
     email: '',
@@ -100,6 +80,29 @@ export default function CheckoutPage() {
     state: '',
     pincode: '',
   });
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setNewAddress(prev => ({
+        ...prev,
+        email: user.email || prev.email,
+        name: user.name || prev.name,
+        phone: user.phone || prev.phone,
+      }));
+      setOrderEmail(user.email || '');
+      
+      accountApi.getAddresses()
+        .then((res) => {
+          if (res.success && res.data && res.data.length > 0) {
+            setSavedAddresses(res.data);
+            setAddressMode('saved');
+            setSelectedAddressId(res.data.find(a => a.isDefault)?.id || res.data[0]?.id || null);
+          }
+        })
+        .catch((e) => console.error('Failed to load addresses:', e));
+    }
+  }, [isAuthenticated, user]);
+
   const [formErrors, setFormErrors] = useState({});
   const [selectedPayment, setSelectedPayment] = useState('cod');
   const [orderEmail, setOrderEmail] = useState('');
@@ -155,6 +158,11 @@ export default function CheckoutPage() {
 
   const nextStep = () => {
     if (currentStep === 0 && items.length > 0) {
+      if (!isLoading && !isAuthenticated) {
+        toast.error('Please sign in to continue with checkout');
+        router.push('/signin?redirect=/checkout');
+        return;
+      }
       setCurrentStep(1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
