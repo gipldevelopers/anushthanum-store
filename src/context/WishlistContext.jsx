@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { accountApi } from '@/services/accountApi';
 
 const WishlistContext = createContext(undefined);
 
@@ -23,7 +24,7 @@ export function WishlistProvider({ children }) {
     localStorage.setItem('anushtanum-wishlist', JSON.stringify(items));
   }, [items]);
 
-  const addToWishlist = (product) => {
+  const addToWishlist = async (product) => {
     setItems((prev) => {
       const exists = prev.some((item) => item.id === product.id);
       if (exists) return prev;
@@ -33,9 +34,17 @@ export function WishlistProvider({ children }) {
       description: product.name,
       duration: 2000,
     });
+    try {
+      const raw = localStorage.getItem('anushthanum_auth');
+      if (raw && JSON.parse(raw)?.accessToken) {
+        await accountApi.addWishlistItem(product.id);
+      }
+    } catch (e) {
+      // silently fail if not logged in
+    }
   };
 
-  const removeFromWishlist = (productId) => {
+  const removeFromWishlist = async (productId) => {
     const product = items.find((item) => item.id === productId);
     setItems((prev) => prev.filter((item) => item.id !== productId));
     if (product) {
@@ -43,6 +52,14 @@ export function WishlistProvider({ children }) {
         description: product.name,
         duration: 2000,
       });
+    }
+    try {
+      const raw = localStorage.getItem('anushthanum_auth');
+      if (raw && JSON.parse(raw)?.accessToken) {
+        await accountApi.removeWishlistItem(productId);
+      }
+    } catch (e) {
+      // silently fail
     }
   };
 

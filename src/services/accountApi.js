@@ -23,6 +23,7 @@ export const accountApi = {
   updateAddress: (id, data) => api.put(`/account/addresses/${id}`, data).then(handleResponse).catch(handleError),
   deleteAddress: (id) => api.delete(`/account/addresses/${id}`).then(handleResponse).catch(handleError),
   getWishlist: () => api.get('/account/wishlist').then(handleResponse).catch(handleError),
+  addWishlistItem: (productId) => api.post('/account/wishlist', { productId }).then(handleResponse).catch(handleError),
   removeWishlistItem: (productId) => api.delete(`/account/wishlist/${productId}`).then(handleResponse).catch(handleError),
   updateProfile: (data) => api.patch('/account/profile', data).then(handleResponse).catch(handleError),
   changePassword: (data) => api.post('/account/change-password', data).then(handleResponse).catch(handleError),

@@ -967,6 +967,7 @@ import {
 import { toast } from 'sonner';
 import { accountApi } from '@/services/accountApi';
 import { useAuth } from '@/context/AuthContext';
+import { useWishlist } from '@/context/WishlistContext';
 
 const defaultUser = { name: 'User', email: '', phone: '', avatar: '', memberSince: '', spiritualLevel: 'Regular Practitioner' };
 const UPLOAD_BASE = process.env.NEXT_PUBLIC_SERVER_URL || (process.env.NEXT_PUBLIC_API_URL
@@ -1147,6 +1148,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser, isAuthenticated, isLoading, signOut } = useAuth();
+  const { removeFromWishlist } = useWishlist();
   
   const tabParam = searchParams?.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam || 'overview');
@@ -2059,8 +2061,7 @@ export default function ProfilePage() {
                                 const pid = product.productId ?? product.id;
                                 if (!pid) return;
                                 try {
-                                  await accountApi.removeWishlistItem(pid);
-                                  toast.success('Removed from wishlist');
+                                  await removeFromWishlist(pid);
                                   await fetchWishlist();
                                   await fetchOverview();
                                 } catch (e) { toast.error(e?.message || 'Failed to remove'); }
