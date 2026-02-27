@@ -203,3 +203,8 @@ Frontend sends it to POST /api/admin/upload/image (admin auth).
 Backend saves under uploads/categories/ and returns the URL path.
 Frontend saves that path in the category form and sends it in create/update as image (unchanged API contract).
 No linter issues reported. You can test by adding or editing a category and uploading an image.
+---------------------------------------------
+npm run db:seed
+npm run db:seed-filter-attributes
+node seed-cms.js
+node seed-blogs.js

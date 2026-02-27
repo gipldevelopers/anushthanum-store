@@ -37,7 +37,7 @@ const navItems = [
   { label: 'Products', href: '/admin/products', icon: Package },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { label: 'Blog Posts', href: '/admin/blogs', icon: BookOpen },
-  { label: 'Media Manager', href: '/admin/media', icon: Image },
+  // { label: 'Media Manager', href: '/admin/media', icon: Image },
   { label: 'Content CMS', href: '/admin/content', icon: FileText },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
