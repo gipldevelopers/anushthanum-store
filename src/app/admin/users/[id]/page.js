@@ -11,16 +11,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { ArrowLeft, Phone, Calendar, Package, MapPin, CreditCard, Star, Pencil } from 'lucide-react';
 import { usersApi } from '@/services/adminApi';
+import { imageSrc } from '@/lib/utils';
 
-const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
-  : '';
 
-function avatarSrc(url) {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  return url.startsWith('/') ? `${API_ORIGIN}${url}` : `${API_ORIGIN}/${url}`;
-}
 
 export default function AdminUserDetailPage() {
   const params = useParams();
@@ -86,7 +79,7 @@ export default function AdminUserDetailPage() {
           <CardHeader>
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={avatarSrc(user.avatar)} alt="" />
+                <AvatarImage src={imageSrc(user.avatar)} alt="" />
                 <AvatarFallback className="bg-primary/10 text-primary text-2xl">
                   {(user.name || user.email || '?').charAt(0).toUpperCase()}
                 </AvatarFallback>

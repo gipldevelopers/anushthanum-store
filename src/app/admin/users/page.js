@@ -20,16 +20,9 @@ import { toast } from 'sonner';
 import { Search, Users, Eye, Pencil } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { usersApi } from '@/services/adminApi';
+import { imageSrc } from '@/lib/utils';
 
-const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
-  : '';
 
-function avatarSrc(url) {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  return url.startsWith('/') ? `${API_ORIGIN}${url}` : `${API_ORIGIN}/${url}`;
-}
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
@@ -149,7 +142,7 @@ export default function AdminUsersPage() {
                     <TableRow key={u.id}>
                       <TableCell>
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={avatarSrc(u.avatar)} alt="" />
+                          <AvatarImage src={imageSrc(u.avatar)} alt="" />
                           <AvatarFallback className="bg-primary/10 text-primary text-sm">
                             {(u.name || u.email || '?').charAt(0).toUpperCase()}
                           </AvatarFallback>

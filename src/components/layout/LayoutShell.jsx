@@ -5,7 +5,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ScrollNavigation from '@/components/layout/ScrollNavigation';
 
-const AUTH_ROUTES = ['/signin', '/signup', '/forgot-password'];
+const AUTH_ROUTES = ['/signin', '/signup', '/forgot-password', '/reset-password'];
 
 export default function LayoutShell({ children }) {
   const pathname = usePathname();

@@ -16,6 +16,7 @@ import {
   AlertCircle, CheckCircle2, BookOpen, Users, Star, Shield,
 } from 'lucide-react';
 import { adminContentApi } from '@/services/contentApi';
+import { imageSrc } from '@/lib/utils';
 
 /* ─────────────────────────────────────────────────────────
    DEFAULTS (mirrors the seed data exactly)
@@ -136,7 +137,7 @@ function SlideEditor({ slide, index, total, onChange, onRemove, onMoveUp, onMove
       <FieldRow label="Image URL">
         <div className="flex gap-2">
           <div className="relative flex-1"><ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input className="pl-9" value={slide.image || ''} onChange={set('image')} placeholder="/images/hero/hero-1.jpg" /></div>
-          {slide.image && <img src={slide.image} alt="" className="h-10 w-16 rounded object-cover border flex-shrink-0" onError={e => e.target.style.display = 'none'} />}
+          {slide.image && <img src={imageSrc(slide.image) || slide.image} alt="" className="h-10 w-16 rounded object-cover border flex-shrink-0" onError={e => e.target.style.display = 'none'} />}
         </div>
       </FieldRow>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -285,10 +286,7 @@ function ExpertEditor({ expert, index, total, onChange, onRemove, onMoveUp, onMo
     if (file) handleFile(file);
   };
 
-  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-  const photoSrc = expert.image
-    ? expert.image.startsWith('http') ? expert.image : `${BACKEND_URL}${expert.image}`
-    : null;
+  const photoSrc = imageSrc(expert.image) || expert.image;
 
   return (
     <AccordionItem title={expert.name || `Expert ${index + 1}`} subtitle={expert.role} defaultOpen={index === 0}>
@@ -697,7 +695,7 @@ export default function ContentPage() {
                 <FieldRow label="Logo URL">
                   <div className="flex gap-2">
                     <Input value={settings.logo || ''} onChange={e => setSettings(p => ({ ...p, logo: e.target.value }))} placeholder="/uploads/logo.png" />
-                    {settings.logo && <img src={settings.logo} alt="logo" className="h-10 w-10 object-contain border rounded flex-shrink-0" onError={e => e.target.style.display = 'none'} />}
+                    {settings.logo && <img src={imageSrc(settings.logo) || settings.logo} alt="logo" className="h-10 w-10 object-contain border rounded flex-shrink-0" onError={e => e.target.style.display = 'none'} />}
                   </div>
                 </FieldRow>
                 <FieldRow label="Favicon URL"><Input value={settings.favicon || ''} onChange={e => setSettings(p => ({ ...p, favicon: e.target.value }))} /></FieldRow>

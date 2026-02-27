@@ -13,15 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Loader2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { subSubCategoriesApi, subCategoriesApi, uploadApi } from '@/services/adminApi';
+import { imageSrc } from '@/lib/utils';
 
-const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
-  : '';
-function imageSrc(url) {
-  if (!url) return null;
-  if (url.startsWith('http') || url.startsWith('//')) return url;
-  return API_ORIGIN ? `${API_ORIGIN}${url}` : url;
-}
+
 
 const generateSlug = (n) =>
   String(n || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || '';

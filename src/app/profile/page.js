@@ -914,7 +914,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User,
@@ -969,12 +969,22 @@ import { accountApi } from '@/services/accountApi';
 import { useAuth } from '@/context/AuthContext';
 
 const defaultUser = { name: 'User', email: '', phone: '', avatar: '', memberSince: '', spiritualLevel: 'Regular Practitioner' };
-const UPLOAD_BASE = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
+const UPLOAD_BASE = process.env.NEXT_PUBLIC_SERVER_URL || (process.env.NEXT_PUBLIC_API_URL
   ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
-  : '';
+  : 'http://localhost:5000');
+
 function toImgUrl(path) {
   if (!path) return '/placeholder.svg';
   if (path.startsWith('http')) return path;
+  
+  // Try to parse if it's a JSON array string
+  try {
+    const parsed = JSON.parse(path);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      path = parsed[0];
+    }
+  } catch (e) {}
+  
   return path.startsWith('/') ? `${UPLOAD_BASE}${path}` : `${UPLOAD_BASE}/${path}`;
 }
 
@@ -1135,8 +1145,18 @@ function MobileDrawer({ isOpen, onClose, user, activeTab, setActiveTab, signOut,
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user: authUser, isAuthenticated, isLoading, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  
+  const tabParam = searchParams?.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'overview');
+
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
   const [overview, setOverview] = useState(null);
   const [orders, setOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);

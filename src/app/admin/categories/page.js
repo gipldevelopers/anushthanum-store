@@ -29,6 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, FolderTree } from 'lucide-react';
 import { categoriesApi } from '@/services/adminApi';
+import { imageSrc } from '@/lib/utils';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -154,7 +155,7 @@ export default function AdminCategoriesPage() {
                       <TableCell>
                         <div className="h-12 w-12 rounded-lg bg-muted overflow-hidden">
                           {cat.image ? (
-                            <img src={cat.image} alt={cat.name} className="h-full w-full object-cover" />
+                            <img src={imageSrc(cat.image)} alt={cat.name} className="h-full w-full object-cover" />
                           ) : (
                             <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs">—</div>
                           )}

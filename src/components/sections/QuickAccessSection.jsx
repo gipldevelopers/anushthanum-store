@@ -23,38 +23,14 @@ export default function QuickAccessSection() {
     getCategories({ type: 'material' })
       .then((res) => {
         const list = res?.categories ?? [];
-        if (list.length > 0) {
-          setItems(list.map((c) => ({
-            id: c.id,
-            label: c.name,
-            image: toFullImageUrl(c.image) || '/placeholder.svg',
-            slug: c.slug,
-          })));
-        } else {
-          getCategories({ type: 'main' }).then((r) => {
-            const mainList = r?.categories ?? [];
-            setItems(mainList.map((c) => ({
-              id: c.id,
-              label: c.name,
-              image: toFullImageUrl(c.image) || '/placeholder.svg',
-              slug: c.slug,
-            })));
-          }).catch(() => setItems([]));
-        }
+        setItems(list.map((c) => ({
+          id: c.id,
+          label: c.name,
+          image: toFullImageUrl(c.image) || '/placeholder.svg',
+          slug: c.slug,
+        })));
       })
-      .catch(() => {
-        getCategories({ type: 'main' })
-          .then((r) => {
-            const mainList = r?.categories ?? [];
-            setItems(mainList.map((c) => ({
-              id: c.id,
-              label: c.name,
-              image: toFullImageUrl(c.image) || '/placeholder.svg',
-              slug: c.slug,
-            })));
-          })
-          .catch(() => setItems([]));
-      })
+      .catch(() => setItems([]))
       .finally(() => setLoading(false));
   }, []);
 

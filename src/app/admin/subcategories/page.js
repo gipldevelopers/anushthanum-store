@@ -41,15 +41,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Layers } from 'lucide-react';
 import { subCategoriesApi, categoriesApi } from '@/services/adminApi';
+import { imageSrc } from '@/lib/utils';
 
-const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
-  : '';
-function imageSrc(url) {
-  if (!url) return null;
-  if (url.startsWith('http') || url.startsWith('//')) return url;
-  return API_ORIGIN ? `${API_ORIGIN}${url}` : url;
-}
+
 
 export default function AdminSubCategoriesPage() {
   const [subCategories, setSubCategories] = useState([]);

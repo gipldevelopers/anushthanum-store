@@ -47,6 +47,8 @@ export const authService = {
   verifyOtp: (body) => api.post('/auth/verify-otp', body).then((res) => res.data),
   login: (body) => api.post('/auth/login', body).then((res) => res.data),
   googleAuth: (body) => api.post('/auth/google', body).then((res) => res.data),
+  forgotPassword: (body) => api.post('/auth/forgot-password', body).then((res) => res.data),
+  resetPassword: (body) => api.post('/auth/reset-password', body).then((res) => res.data),
   getMe: () => api.get('/auth/me').then((res) => res.data),
 
   // ----- Admin auth -----

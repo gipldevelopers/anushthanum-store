@@ -93,10 +93,10 @@ export default function CheckoutPage() {
       
       accountApi.getAddresses()
         .then((res) => {
-          if (res.success && res.data && res.data.length > 0) {
-            setSavedAddresses(res.data);
+          if (res.success && res.addresses && res.addresses.length > 0) {
+            setSavedAddresses(res.addresses);
             setAddressMode('saved');
-            setSelectedAddressId(res.data.find(a => a.isDefault)?.id || res.data[0]?.id || null);
+            setSelectedAddressId(res.addresses.find(a => a.isDefault)?.id || res.addresses[0]?.id || null);
           }
         })
         .catch((e) => console.error('Failed to load addresses:', e));
@@ -529,7 +529,13 @@ export default function CheckoutPage() {
                             </div>
                             <div>
                               <span className="font-medium">{savedAddresses.length > 0 ? '+ Add New Address' : 'Enter Shipping Address'}</span>
-                              <p className="text-sm text-muted-foreground">{savedAddresses.length > 0 ? 'Ship to a different address' : 'No account needed - checkout as guest'}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {savedAddresses.length > 0 
+                                  ? 'Ship to a different address' 
+                                  : isAuthenticated 
+                                    ? 'Add a new shipping address' 
+                                    : 'No account needed - checkout as guest'}
+                              </p>
                             </div>
                           </button>
                         </>

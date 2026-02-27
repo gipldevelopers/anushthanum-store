@@ -121,6 +121,8 @@ export default function Navbar() {
   const [expandedItems, setExpandedItems] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isDesktopProfileOpen, setIsDesktopProfileOpen] = useState(false);
+  const [isMobileProfileOpen, setIsMobileProfileOpen] = useState(false);
   const searchInputRef = useRef(null);
   const { totalItems, setIsCartOpen } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
@@ -251,45 +253,52 @@ export default function Navbar() {
                 )}
               </Button>
               {isAuthenticated && user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full h-11 w-11 min-w-0 p-0 text-foreground/70 hover:text-foreground hover:bg-muted/50"
-                      aria-label="Account menu"
-                    >
-                      <Avatar className="h-9 w-9 ring-1 ring-border">
-                        <AvatarImage src={user.avatar} alt={user.name || user.email} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                          {(user.name || user.email || 'U').charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer" onClick={() => setIsMenuOpen(false)}>
-                        <User className="w-4 h-4" />
-                        Account
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer" onClick={() => setIsMenuOpen(false)}>
-                        <Package className="w-4 h-4" />
-                        Orders
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive cursor-pointer"
-                      onClick={() => { signOut(); setIsMenuOpen(false); }}
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div
+                  className="relative flex items-center h-full"
+                  onMouseEnter={() => setIsMobileProfileOpen(true)}
+                  onMouseLeave={() => setIsMobileProfileOpen(false)}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-11 w-11 min-w-0 p-0 text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                    aria-label="Account menu"
+                    onClick={() => setIsMobileProfileOpen(!isMobileProfileOpen)}
+                  >
+                    <Avatar className="h-9 w-9 ring-1 ring-border">
+                      <AvatarImage src={user.avatar} alt={user.name || user.email} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                        {(user.name || user.email || 'U').charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                  <AnimatePresence>
+                    {isMobileProfileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-[calc(100%+0.25rem)] w-48 py-1.5 bg-background rounded-lg shadow-lg border border-border z-50 flex flex-col"
+                      >
+                        <div className="absolute -top-3 left-0 right-0 h-3 bg-transparent" />
+                        <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors w-full cursor-pointer" onClick={() => setIsMobileProfileOpen(false)}>
+                          <User className="w-4 h-4" />
+                          Account
+                        </Link>
+                        <Link href="/profile?tab=orders" className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors w-full cursor-pointer" onClick={() => setIsMobileProfileOpen(false)}>
+                          <Package className="w-4 h-4" />
+                          Orders
+                        </Link>
+                        <div className="h-px bg-border my-1" />
+                        <button onClick={() => { signOut(); setIsMobileProfileOpen(false); setIsMenuOpen(false); }} className="flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors w-full text-left cursor-pointer">
+                          <LogOut className="w-4 h-4" />
+                          Sign out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ) : (
                 <Link href="/signin" className="flex">
                   <Button
@@ -436,13 +445,18 @@ export default function Navbar() {
                 )}
               </Button>
               {isAuthenticated && user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                <div
+                  className="relative flex items-center h-full"
+                  onMouseEnter={() => setIsDesktopProfileOpen(true)}
+                  onMouseLeave={() => setIsDesktopProfileOpen(false)}
+                >
+                  <Link href="/profile">
                     <Button
                       variant="ghost"
                       size="icon"
                       className="rounded-full h-11 w-11 sm:h-10 sm:w-10 p-0 text-foreground/70 hover:text-foreground hover:bg-muted/50"
                       aria-label="Account menu"
+                      onClick={() => setIsDesktopProfileOpen(false)}
                     >
                       <Avatar className="h-9 w-9 sm:h-8 sm:w-8 ring-1 ring-border">
                         <AvatarImage src={user.avatar} alt={user.name || user.email} />
@@ -451,30 +465,34 @@ export default function Navbar() {
                         </AvatarFallback>
                       </Avatar>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
-                        <User className="w-4 h-4" />
-                        Account
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer">
-                        <Package className="w-4 h-4" />
-                        Orders
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive cursor-pointer"
-                      onClick={() => signOut()}
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </Link>
+                  <AnimatePresence>
+                    {isDesktopProfileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-[calc(100%+0.25rem)] w-48 py-1.5 bg-background rounded-lg shadow-lg border border-border z-50 flex flex-col"
+                      >
+                        <div className="absolute -top-3 left-0 right-0 h-3 bg-transparent" />
+                        <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors w-full cursor-pointer" onClick={() => setIsDesktopProfileOpen(false)}>
+                          <User className="w-4 h-4" />
+                          Account
+                        </Link>
+                        <Link href="/profile?tab=orders" className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors w-full cursor-pointer" onClick={() => setIsDesktopProfileOpen(false)}>
+                          <Package className="w-4 h-4" />
+                          Orders
+                        </Link>
+                        <div className="h-px bg-border my-1" />
+                        <button onClick={() => { signOut(); setIsDesktopProfileOpen(false); }} className="flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors w-full text-left cursor-pointer">
+                          <LogOut className="w-4 h-4" />
+                          Sign out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ) : (
                 <Link href="/signin" className="touch-target flex">
                   <Button
@@ -695,7 +713,7 @@ export default function Navbar() {
                           Account
                         </Link>
                         <Link
-                          href="/orders"
+                          href="/profile?tab=orders"
                           className="flex items-center justify-center gap-2 py-2.5 px-3 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors text-sm font-medium"
                           onClick={() => setIsMenuOpen(false)}
                         >

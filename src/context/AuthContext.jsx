@@ -149,6 +149,36 @@ export function AuthProvider({ children }) {
     }
   }, [setAuthFromResponse]);
 
+  const forgotPassword = useCallback(async (email) => {
+    try {
+      const res = await authService.forgotPassword({ email });
+      if (res.success) {
+        return { success: true, message: res.message, devOtp: res.devOtp };
+      }
+      return { success: false, error: res.message || 'Forgot password failed.' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.data?.message || err.message || 'Forgot password failed.',
+      };
+    }
+  }, []);
+
+  const resetPassword = useCallback(async (email, otp, password) => {
+    try {
+      const res = await authService.resetPassword({ email, otp, password });
+      if (res.success) {
+        return { success: true, message: res.message };
+      }
+      return { success: false, error: res.message || 'Reset password failed.' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.data?.message || err.message || 'Reset password failed.',
+      };
+    }
+  }, []);
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -159,6 +189,8 @@ export function AuthProvider({ children }) {
     resendOtp,
     signOut,
     signInWithGoogle,
+    forgotPassword,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

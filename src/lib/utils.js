@@ -6,9 +6,8 @@ export function cn(...inputs) {
 }
 
 const API_ORIGIN =
-  typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
-    : '';
+  process.env.NEXT_PUBLIC_SERVER_URL ||
+  (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000');
 
 export function imageSrc(url) {
   if (!url) return null;

@@ -33,7 +33,7 @@ export default function SignUpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParams = searchParams.get('redirect');
-  const redirectPath = redirectParams || '/profile';
+  const redirectPath = redirectParams || '/';
   
   const { signUp, verifyOtp, resendOtp, isAuthenticated } = useAuth();
   const [name, setName] = useState('');
@@ -157,7 +157,7 @@ export default function SignUpPage() {
               <GoogleSignInButton
                 variant="outline"
                 className="w-full h-11 border-border bg-background hover:bg-muted/50 text-foreground font-medium"
-                redirectTo="/profile"
+                redirectTo="/"
               />
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">

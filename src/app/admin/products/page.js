@@ -41,15 +41,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Package } from 'lucide-react';
 import { productsApi, categoriesApi, subCategoriesApi } from '@/services/adminApi';
+import { imageSrc } from '@/lib/utils';
 
-const API_ORIGIN = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
-  : '';
-function imageSrc(url) {
-  if (!url) return null;
-  if (url.startsWith('http') || url.startsWith('//')) return url;
-  return API_ORIGIN ? `${API_ORIGIN}${url}` : url;
-}
+
 
 const formatPrice = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n ?? 0);
 

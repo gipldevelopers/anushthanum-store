@@ -16,12 +16,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ForgotPasswordPage() {
+  const { forgotPassword } = useAuth();
+  
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
+  const [devOtp, setDevOtp] = useState('');
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email?.trim()) {
@@ -29,11 +33,16 @@ export default function ForgotPasswordPage() {
       return;
     }
     setIsSubmitting(true);
-    // Simulate API call – replace with real password-reset API when backend is ready
-    await new Promise((r) => setTimeout(r, 1200));
+    const result = await forgotPassword(email.trim());
     setIsSubmitting(false);
-    setIsSuccess(true);
-    toast.success('If an account exists, we\'ve sent a reset link.');
+
+    if (result.success) {
+      if (result.devOtp) setDevOtp(result.devOtp);
+      setIsSuccess(true);
+      toast.success(result.message, result.devOtp ? { description: `Dev Link Code: ${result.devOtp}` } : undefined);
+    } else {
+      toast.error(result.error || 'Failed to request password reset.');
+    }
   };
 
   return (
@@ -74,12 +83,23 @@ export default function ForgotPasswordPage() {
                   <p className="text-sm text-muted-foreground mt-1">
                     If an account exists for <span className="font-medium text-foreground">{email}</span>, you will receive a password reset link shortly.
                   </p>
+                  {devOtp && (
+                    <div className="mt-4 p-3 bg-muted rounded-md text-left">
+                      <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Development Mode</p>
+                      <Link href={`/reset-password?email=${encodeURIComponent(email)}&code=${devOtp}`} className="text-sm text-primary hover:underline break-all">
+                        Click here to test reset link
+                      </Link>
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Didn&apos;t receive the email? Check your spam folder or{' '}
                   <button
                     type="button"
-                    onClick={() => setIsSuccess(false)}
+                    onClick={() => {
+                        setIsSuccess(false);
+                        setDevOtp('');
+                    }}
                     className="text-primary font-medium hover:underline"
                   >
                     try again
