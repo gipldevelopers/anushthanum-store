@@ -1175,6 +1175,111 @@ export default function ProfilePage() {
   const [isMobile, setIsMobile] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+
+  const handleDownloadInvoice = (order) => {
+    const itemsHtml = (order.items || []).map(i => `
+      <tr>
+        <td><strong>${i.productName || i.name || 'Product'}</strong></td>
+        <td class="text-center">${i.quantity || 1}</td>
+        <td class="text-right">₹${Number(i.price || 0).toLocaleString()}</td>
+        <td class="text-right">₹${Number(i.total || (i.price * i.quantity)).toLocaleString()}</td>
+      </tr>
+    `).join('');
+
+    const discountHtml = order.discount 
+      ? `<div><span style="color: #666;">Discount:</span><span style="color: #16a34a;">-₹${Number(order.discount).toLocaleString()}</span></div>` 
+      : '';
+
+    const invoiceHtml = `
+      <html>
+        <head>
+          <title>Invoice ${order.orderNumber || order.id || ''}</title>
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+            .title { font-size: 28px; font-weight: bold; }
+            .info { margin-top: 30px; display: flex; justify-content: space-between; }
+            table { width: 100%; border-collapse: collapse; margin-top: 40px; font-size: 14px; }
+            th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+            th { text-transform: uppercase; font-size: 12px; color: #666; background-color: #fafafa; }
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .totals { width: 300px; margin-left: auto; margin-top: 30px; }
+            .totals div { display: flex; justify-content: space-between; padding: 8px 0; }
+            .total-row { font-weight: bold; font-size: 18px; border-top: 2px solid #333; margin-top: 10px; padding-top: 15px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="title" style="font-family: serif; color: #B45309;">Anushthanum</div>
+              <div style="color: #666; margin-top: 5px;">Authentic Spiritual Products</div>
+              <br/>
+              <div style="font-size: 12px; color: #666;">
+                123 Spiritual Lane, Varanasi, UP 221001<br/>
+                contact@anushthanum.com<br/>
+                +91 98765 43210
+              </div>
+            </div>
+            <div class="text-right">
+              <h2 style="margin: 0; color: #333; font-size: 32px; letter-spacing: 1px;">INVOICE</h2>
+              <div style="margin-top: 10px; font-size: 14px; color: #666;">
+                <strong>Invoice #:</strong> ${order.orderNumber || order.id || 'N/A'}<br/>
+                <strong>Date:</strong> ${new Date(order.createdAt || order.date || Date.now()).toLocaleDateString()}<br/>
+                <strong>Status:</strong> ${String(order.status || 'Paid').toUpperCase()}
+              </div>
+            </div>
+          </div>
+          <div class="info">
+            <div>
+              <strong style="font-size: 12px; text-transform: uppercase; color: #666;">Bill To:</strong><br/>
+              <div style="margin-top: 8px; font-size: 14px;">
+                <strong>${order.customerName || authUser?.name || 'Customer'}</strong><br/>
+                ${order.customerEmail || authUser?.email || ''}<br/>
+                ${order.shippingAddress?.street || order.shippingAddress?.address || ''}<br/>
+                ${order.shippingAddress?.city ? order.shippingAddress.city + ', ' : ''}${order.shippingAddress?.state || ''} ${order.shippingAddress?.pincode || ''}
+              </div>
+            </div>
+            <div class="text-right" style="font-size: 14px;">
+               <strong style="font-size: 12px; text-transform: uppercase; color: #666;">Payment Info:</strong><br/>
+               <div style="margin-top: 8px;">
+                 <strong>Method:</strong> ${order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}<br/>
+                 <strong>Status:</strong> ${order.paymentStatus || 'Completed'}
+               </div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Item Description</th><th class="text-center">Qty</th><th class="text-right">Unit Price</th><th class="text-right">Total</th></tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+          <div class="totals">
+            <div><span style="color: #666;">Subtotal:</span><span>₹${Number(order.subtotal || order.total).toLocaleString()}</span></div>
+            <div><span style="color: #666;">Shipping:</span><span>₹${Number(order.shippingCost || 0).toLocaleString()}</span></div>
+            ${discountHtml}
+            <div class="total-row"><span>Total:</span><span>₹${Number(order.total || 0).toLocaleString()}</span></div>
+          </div>
+          <div style="margin-top: 60px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px;">
+            Thank you for shopping with Anushthanum! For any queries, please contact our support.
+          </div>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `;
+    const printWindow = window.open('', '_blank', 'width=800,height=800');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(invoiceHtml);
+      printWindow.document.close();
+    } else {
+      toast.error('Please allow popups to download invoice');
+    }
+  };
 
   const fetchOverview = async () => {
     try {
@@ -1794,6 +1899,7 @@ export default function ProfilePage() {
                                   variant="outline"
                                   size="sm"
                                   className="text-xs h-8"
+                                  onClick={() => setSelectedOrderDetails(order)}
                                 >
                                   <Eye className="w-3 h-3 mr-1" />
                                   <span className="hidden sm:inline">Details</span>
@@ -1802,6 +1908,7 @@ export default function ProfilePage() {
                                   variant="outline"
                                   size="sm"
                                   className="text-xs h-8"
+                                  onClick={() => handleDownloadInvoice(order)}
                                 >
                                   <Download className="w-3 h-3 mr-1" />
                                   <span className="hidden sm:inline">Invoice</span>
@@ -1924,7 +2031,7 @@ export default function ProfilePage() {
                                     className="text-sm h-9 sm:h-10"
                                   />
                                 </div>
-                                <div>
+                                {/* <div>
                                   <Label className="text-xs sm:text-sm">Address Type</Label>
                                   <Input
                                     placeholder="Home / Office"
@@ -1932,7 +2039,7 @@ export default function ProfilePage() {
                                     onChange={(e) => setAddressForm((f) => ({ ...f, type: e.target.value }))}
                                     className="text-sm h-9 sm:h-10"
                                   />
-                                </div>
+                                </div> */}
                               </div>
                               <div className="flex items-center gap-2">
                                 <input type="checkbox" id="addr-default" checked={addressForm.isDefault} onChange={(e) => setAddressForm((f) => ({ ...f, isDefault: e.target.checked }))} className="rounded" />
@@ -2364,6 +2471,123 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>
+
+      {/* Order Details Dialog */}
+      <Dialog open={!!selectedOrderDetails} onOpenChange={(open) => !open && setSelectedOrderDetails(null)}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          {selectedOrderDetails && (() => {
+            const order = selectedOrderDetails;
+            const statusConf = getStatusConfig(order.status);
+            return (
+              <>
+                <DialogHeader className="border-b pb-4">
+                  <DialogTitle className="flex justify-between items-center text-xl">
+                    <span>Order Details</span>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-4 space-y-6">
+                  {/* Order Header Info */}
+                  <div className="flex flex-wrap items-start justify-between gap-4 p-4 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Order ID</p>
+                      <p className="font-semibold text-base">{order.orderNumber || order.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Date Placed</p>
+                      <p className="font-semibold text-base">{new Date(order.createdAt || order.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Status</p>
+                      <Badge variant={statusConf.variant} className="mt-1 flex items-center gap-1">
+                        <statusConf.icon className="w-3 h-3" />
+                        {statusConf.label}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Items List */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Items Ordered</h3>
+                    <div className="space-y-3">
+                      {(order.items || []).map((item, idx) => (
+                        <div key={idx} className="flex gap-4 p-3 border rounded-lg items-center">
+                          <div className="w-16 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
+                            {item.productImage || item.image || item.thumbnail ? (
+                              <img src={toImgUrl(item.productImage || item.image || item.thumbnail)} alt={item.productName || item.name} className="w-full h-full object-cover" />
+                            ) : null}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium line-clamp-1">{item.productName || item.name}</p>
+                            <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">₹{(item.total || (item.price * item.quantity)).toLocaleString()}</p>
+                            {item.quantity > 1 && <p className="text-xs text-muted-foreground">₹{item.price?.toLocaleString()} each</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Two-column layout for Shipping and Payment */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2"><MapPin className="w-4 h-4" /> Shipping Address</h3>
+                      <div className="p-3 border rounded-lg bg-muted/10 text-sm h-full">
+                        <p className="font-medium">{order.shippingAddress?.name || authUser?.name}</p>
+                        <p className="text-muted-foreground mt-1">
+                          {order.shippingAddress?.address || order.shippingAddress?.street}<br/>
+                          {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.pincode}
+                        </p>
+                        <p className="text-muted-foreground mt-1 text-xs">{order.shippingAddress?.phone}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2"><CreditCard className="w-4 h-4" /> Payment Details</h3>
+                      <div className="p-3 border rounded-lg bg-muted/10 text-sm h-full">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-muted-foreground">Method:</span>
+                          <span className="font-medium uppercase">{order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod}</span>
+                        </div>
+                        <div className="flex justify-between mb-3">
+                          <span className="text-muted-foreground">Status:</span>
+                          <span className="font-medium capitalize">{order.paymentStatus || 'Completed'}</span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Subtotal</span>
+                            <span>₹{Number(order.subtotal || order.total).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Shipping</span>
+                            <span>{Number(order.shippingCost || 0) === 0 ? 'FREE' : '₹' + Number(order.shippingCost || 0).toLocaleString()}</span>
+                          </div>
+                          {order.discount > 0 && (
+                            <div className="flex justify-between text-green-600">
+                              <span>Discount</span>
+                              <span>-₹{Number(order.discount).toLocaleString()}</span>
+                            </div>
+                          )}
+                          <Separator className="my-2" />
+                          <div className="flex justify-between font-bold text-base">
+                            <span>Total</span>
+                            <span>₹{Number(order.total || 0).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 border-t pt-4">
+                  <Button variant="outline" onClick={() => setSelectedOrderDetails(null)}>Close</Button>
+                  <Button onClick={() => handleDownloadInvoice(order)}><Download className="w-4 h-4 mr-2"/> Download Invoice</Button>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

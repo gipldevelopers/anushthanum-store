@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { dashboardApi } from '@/services/adminApi';
 import {
   FolderTree,
   Layers,
@@ -18,36 +20,24 @@ import {
   IndianRupee,
 } from 'lucide-react';
 
-const mockStats = {
-  totalCategories: 8,
-  totalSubCategories: 24,
-  totalProducts: 156,
-  totalOrders: 1248,
-  activeProducts: 142,
-  pendingOrders: 23,
-  revenue: 847500,
-  recentProducts: [
-    {
-      id: '1',
-      name: '5 Mukhi Rudraksha',
-      categoryName: 'Rudraksha',
-      price: 1499,
-    },
-  ],
-  recentOrders: [
-    { id: '1', orderNumber: 'ORD-2024-1248', customerName: 'Rahul Sharma', total: 3638, status: 'pending' },
-  ],
-};
-
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
-      await new Promise((r) => setTimeout(r, 800));
-      setStats(mockStats);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const res = await dashboardApi.getStats();
+        if (res.success) {
+          setStats(res.stats);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats', error);
+        toast.error('Failed to load dashboard statistics');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchStats();
   }, []);

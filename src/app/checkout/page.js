@@ -20,6 +20,7 @@ import {
   Plus,
   Lock,
   Check,
+  Edit3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -112,6 +113,41 @@ export default function CheckoutPage() {
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [isGift, setIsGift] = useState(false);
   const [giftMessage, setGiftMessage] = useState('');
+  const [saveAddress, setSaveAddress] = useState(true);
+  const [editAddressId, setEditAddressId] = useState(null);
+  const [isUpdatingAddress, setIsUpdatingAddress] = useState(false);
+
+  const handleSaveEditAddress = async () => {
+    const addressErrors = validateAddress();
+    if (Object.keys(addressErrors).length > 0) {
+      setFormErrors(addressErrors);
+      return;
+    }
+    setIsUpdatingAddress(true);
+    try {
+      await accountApi.updateAddress(editAddressId, {
+        name: newAddress.name,
+        phone: newAddress.phone,
+        street: newAddress.address,
+        city: newAddress.city,
+        state: newAddress.state,
+        pincode: newAddress.pincode,
+        type: Object.values(savedAddresses).find(a => a.id === editAddressId)?.type || 'Home',
+      });
+      toast.success('Address updated successfully');
+      setAddressMode('saved');
+      setEditAddressId(null);
+      const res = await accountApi.getAddresses();
+      if (res.addresses) {
+        setSavedAddresses(res.addresses);
+      }
+      setSelectedAddressId(editAddressId);
+    } catch(e) {
+      toast.error('Failed to update address: ' + (e?.message || 'Unknown error'));
+    } finally {
+      setIsUpdatingAddress(false);
+    }
+  };
 
   const getShippingAddress = () => {
     if (addressMode === 'saved' && selectedAddressId) {
@@ -255,6 +291,22 @@ export default function CheckoutPage() {
     setIsPlacingOrder(true);
     try {
       const res = await checkoutApi.createOrder(orderPayload);
+
+      if (addressMode === 'new' && saveAddress && isAuthenticated) {
+        try {
+          await accountApi.createAddress({
+            name: addr.name,
+            phone: addr.phone,
+            street: addr.address || addr.street,
+            city: addr.city,
+            state: addr.state,
+            pincode: addr.pincode,
+            type: 'Home',
+          });
+        } catch (e) {
+          console.error('Failed to save address', e);
+        }
+      }
 
       if (res.paymentStatus === 'cod') {
         clearCart();
@@ -464,12 +516,36 @@ export default function CheckoutPage() {
                         return selectedAddr ? (
                           <div className="space-y-3">
                             <div className="p-4 rounded-xl border-2 border-primary bg-primary/5">
-                              <div className="flex items-center gap-2 flex-wrap mb-1">
-                                <Check className="w-4 h-4 text-primary" />
-                                <span className="font-medium">{selectedAddr.name}</span>
-                                {selectedAddr.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
+                              <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Check className="w-4 h-4 text-primary" />
+                                  <span className="font-medium">{selectedAddr.name}</span>
+                                  {selectedAddr.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 px-2 text-muted-foreground hover:text-primary z-10"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setAddressMode('edit');
+                                    setEditAddressId(selectedAddr.id);
+                                    setNewAddress({
+                                      email: orderEmail || user?.email || '',
+                                      name: selectedAddr.name || '',
+                                      phone: selectedAddr.phone || '',
+                                      address: selectedAddr.address || selectedAddr.street || '',
+                                      city: selectedAddr.city || '',
+                                      state: selectedAddr.state || '',
+                                      pincode: selectedAddr.pincode || '',
+                                    });
+                                    setShowAddressOptions(true);
+                                  }}
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </Button>
                               </div>
-                              <p className="text-sm text-muted-foreground">{selectedAddr.address}</p>
+                              <p className="text-sm text-muted-foreground">{selectedAddr.address || selectedAddr.street}</p>
                               <p className="text-sm text-muted-foreground">{selectedAddr.city}, {selectedAddr.state} - {selectedAddr.pincode}</p>
                               <p className="text-sm text-muted-foreground mt-1">📞 {selectedAddr.phone}</p>
                             </div>
@@ -482,7 +558,7 @@ export default function CheckoutPage() {
                         ) : null;
                       })()}
 
-                      {(showAddressOptions || addressMode === 'new' || savedAddresses.length === 0) && (
+                      {(showAddressOptions || addressMode === 'new' || addressMode === 'edit' || savedAddresses.length === 0) && (
                         <>
                           {savedAddresses.length > 0 && (
                             <RadioGroup
@@ -508,10 +584,31 @@ export default function CheckoutPage() {
                                       <span className="font-medium">{addr.name}</span>
                                       {addr.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
                                     </div>
-                                    <p className="text-sm text-muted-foreground mt-1">{addr.address}</p>
+                                    <p className="text-sm text-muted-foreground mt-1">{addr.address || addr.street}</p>
                                     <p className="text-sm text-muted-foreground">{addr.city}, {addr.state} - {addr.pincode}</p>
                                     <p className="text-sm text-muted-foreground mt-1">📞 {addr.phone}</p>
                                   </div>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-8 px-2 text-muted-foreground hover:text-primary z-10"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setAddressMode('edit');
+                                      setEditAddressId(addr.id);
+                                      setNewAddress({
+                                        email: orderEmail || user?.email || '',
+                                        name: addr.name || '',
+                                        phone: addr.phone || '',
+                                        address: addr.address || addr.street || '',
+                                        city: addr.city || '',
+                                        state: addr.state || '',
+                                        pincode: addr.pincode || '',
+                                      });
+                                    }}
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </Button>
                                 </label>
                               ))}
                             </RadioGroup>
@@ -519,7 +616,7 @@ export default function CheckoutPage() {
 
                           <button
                             type="button"
-                            onClick={() => { setAddressMode('new'); setSelectedAddressId(null); setShowAddressOptions(true); }}
+                            onClick={() => { setAddressMode('new'); setEditAddressId(null); setSelectedAddressId(null); setShowAddressOptions(true); }}
                             className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
                               addressMode === 'new' ? 'border-primary bg-primary/5' : 'border-dashed border-border hover:border-primary/50'
                             }`}
@@ -541,7 +638,7 @@ export default function CheckoutPage() {
                         </>
                       )}
 
-                      {addressMode === 'new' && (
+                      {(addressMode === 'new' || addressMode === 'edit') && (
                         <div className="space-y-4 pt-2">
                           <div>
                             <Label>Email <span className="text-destructive">*</span></Label>
@@ -592,6 +689,32 @@ export default function CheckoutPage() {
                               {formErrors.pincode && <p className="text-xs text-destructive mt-1">{formErrors.pincode}</p>}
                             </div>
                           </div>
+                          {isAuthenticated && addressMode === 'new' && (
+                            <div className="flex items-center gap-2 pt-2">
+                              <Checkbox 
+                                id="save-address" 
+                                checked={saveAddress} 
+                                onCheckedChange={(c) => setSaveAddress(c === true)} 
+                              />
+                              <Label htmlFor="save-address" className="text-sm font-medium leading-none cursor-pointer">
+                                Save this address for future orders
+                              </Label>
+                            </div>
+                          )}
+                          {addressMode === 'edit' && (
+                            <div className="flex gap-2 pt-4">
+                              <Button type="button" onClick={handleSaveEditAddress} disabled={isUpdatingAddress}>
+                                {isUpdatingAddress ? 'Saving...' : 'Update Address'}
+                              </Button>
+                              <Button type="button" variant="outline" onClick={() => {
+                                setAddressMode('saved');
+                                setEditAddressId(null);
+                                setShowAddressOptions(true);
+                              }}>
+                                Cancel
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </CardContent>

@@ -1,0 +1,6 @@
+
+D:\office\anushthanum\both\frontend\src\app\profile\page.js
+  2592:0  error  Parsing error: Unexpected token (2592:0)
+
+✖ 1 problem (1 error, 0 warnings)
+
